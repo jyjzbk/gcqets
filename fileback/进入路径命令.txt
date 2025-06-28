@@ -1,8 +1,0 @@
-f:
-cd F:\xampp\htdocs\gcqets\backend
-php artisan serve
-
-
-f:
-cd F:\xampp\htdocs\gcqets\frontend
-npm run dev
