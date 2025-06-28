@@ -18,22 +18,150 @@ use Illuminate\Validation\ValidationException;
 class OrganizationController extends Controller
 {
     /**
-     * 获取组织机构列表
+     * 获取组织机构列表（树形结构或分页列表）
      */
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        $query = Organization::query();
 
         // 根据用户权限过滤数据范围
         $accessScope = $user->getDataAccessScope();
+
+        // 如果请求特定类型（如学校）且有分页参数，返回分页列表
+        if ($request->filled('type') && ($request->filled('page') || $request->filled('per_page'))) {
+            return $this->getPaginatedOrganizations($request, $accessScope);
+        }
+
+        // 如果有搜索条件，返回扁平列表用于搜索结果显示
+        if ($request->filled('search') || $request->filled('level') || $request->filled('status')) {
+            return $this->getFilteredOrganizations($request, $accessScope);
+        }
+
+        // 默认返回树形结构
+        if ($accessScope['type'] === 'none') {
+            return response()->json([
+                'message' => '获取组织机构列表成功',
+                'data' => [],
+                'total' => 0,
+                'code' => 200
+            ]);
+        }
+
+        // 获取所有组织数据并构建树形结构
+        $query = Organization::query();
+        if ($accessScope['type'] === 'specific') {
+            $query->whereIn('id', $accessScope['organizations']);
+        }
+
+        $allOrganizations = $query->orderBy('level')->orderBy('sort_order')->get();
+
+        // 构建真正的树形结构
+        $treeData = $this->buildTreeStructure($allOrganizations);
+
+        return response()->json([
+            'message' => '获取组织机构列表成功',
+            'data' => $treeData,
+            'total' => $allOrganizations->count(),
+            'code' => 200
+        ]);
+    }
+
+    /**
+     * 获取分页的组织列表（用于特定类型如学校的列表查询）
+     */
+    private function getPaginatedOrganizations(Request $request, array $accessScope): JsonResponse
+    {
+        $query = Organization::query();
+
+        // 类型过滤
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        // 权限过滤
         if ($accessScope['type'] === 'specific') {
             $query->whereIn('id', $accessScope['organizations']);
         } elseif ($accessScope['type'] === 'none') {
-            // 如果用户没有任何权限，返回空结果
             $query->whereRaw('1 = 0');
         }
-        // 如果是 'all' 类型，不添加任何过滤条件
+        // 如果是 'all' 类型，不添加任何过滤条件，允许访问所有数据
+
+        // 搜索条件
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->input('name') . '%');
+        }
+
+        if ($request->filled('code')) {
+            $query->where('code', 'like', '%' . $request->input('code') . '%');
+        }
+
+        // 学校特有字段过滤
+        if ($request->filled('school_type')) {
+            $query->where('school_type', $request->input('school_type'));
+        }
+
+        if ($request->filled('education_level')) {
+            $query->where('education_level', $request->input('education_level'));
+        }
+
+        if ($request->filled('parent_id')) {
+            $query->where('parent_id', $request->input('parent_id'));
+        }
+
+        if ($request->filled('principal_name')) {
+            $query->where('principal_name', 'like', '%' . $request->input('principal_name') . '%');
+        }
+
+        if ($request->filled('contact_phone')) {
+            $query->where('contact_phone', 'like', '%' . $request->input('contact_phone') . '%');
+        }
+
+        if ($request->filled('min_students')) {
+            $query->where('student_count', '>=', $request->input('min_students'));
+        }
+
+        if ($request->filled('max_students')) {
+            $query->where('student_count', '<=', $request->input('max_students'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // 建校年份范围
+        if ($request->filled('founded_year_range') && is_array($request->input('founded_year_range'))) {
+            $yearRange = $request->input('founded_year_range');
+            if (count($yearRange) === 2) {
+                $query->whereBetween('founded_year', $yearRange);
+            }
+        }
+
+        // 排序
+        $query->orderBy('created_at', 'desc');
+
+        // 分页
+        $perPage = $request->input('per_page', 20);
+        $organizations = $query->with(['parent'])->paginate($perPage);
+
+        return response()->json([
+            'message' => '获取组织机构列表成功',
+            'data' => $organizations,
+            'code' => 200
+        ]);
+    }
+
+    /**
+     * 获取过滤后的组织列表（扁平结构，用于搜索）
+     */
+    private function getFilteredOrganizations(Request $request, array $accessScope): JsonResponse
+    {
+        $query = Organization::query();
+
+        if ($accessScope['type'] === 'specific') {
+            $query->whereIn('id', $accessScope['organizations']);
+        } elseif ($accessScope['type'] === 'none') {
+            $query->whereRaw('1 = 0');
+        }
 
         // 搜索条件
         if ($request->filled('search')) {
@@ -47,38 +175,108 @@ class OrganizationController extends Controller
 
         // 层级过滤
         if ($request->filled('level')) {
-            $query->level($request->input('level'));
+            $query->where('level', $request->input('level'));
         }
 
         // 状态过滤
         if ($request->filled('status')) {
-            $query->where('status', $request->boolean('status'));
+            $status = $request->boolean('status') ? 'active' : 'inactive';
+            $query->where('status', $status);
         }
 
-        // 父级组织过滤
-        if ($request->filled('parent_id')) {
-            $parentId = $request->input('parent_id');
-            if ($parentId === 'null') {
-                $query->whereNull('parent_id');
-            } else {
-                $query->childrenOf($parentId);
-            }
-        }
-
-        // 排序
-        $sortBy = $request->input('sort_by', 'sort_order');
-        $sortOrder = $request->input('sort_order', 'asc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        // 分页
-        $perPage = $request->input('per_page', 15);
-        $organizations = $query->with(['parent', 'children'])->paginate($perPage);
+        $organizations = $query->orderBy('level')->orderBy('sort_order')->get();
 
         return response()->json([
             'message' => '获取组织机构列表成功',
             'data' => $organizations,
+            'total' => $organizations->count(),
             'code' => 200
         ]);
+    }
+
+    /**
+     * 构建组织机构树形结构
+     */
+    private function buildOrganizationTree(array $accessScope, $parentId = null)
+    {
+        $query = Organization::where('parent_id', $parentId)
+            ->orderBy('sort_order')
+            ->orderBy('name');
+
+        if ($accessScope['type'] === 'specific') {
+            $query->whereIn('id', $accessScope['organizations']);
+        }
+
+        $organizations = $query->get();
+
+        foreach ($organizations as $organization) {
+            // 检查是否有子组织
+            $childrenQuery = Organization::where('parent_id', $organization->id);
+            if ($accessScope['type'] === 'specific') {
+                $childrenQuery->whereIn('id', $accessScope['organizations']);
+            }
+            $childrenCount = $childrenQuery->count();
+
+            $organization->hasChildren = $childrenCount > 0;
+
+            // 懒加载子组织（只在需要时加载）
+            $organization->children = [];
+        }
+
+        return $organizations;
+    }
+
+    /**
+     * 从扁平数组构建完整的树形结构
+     */
+    private function buildTreeStructure($organizations)
+    {
+        $organizationMap = [];
+        $rootNodes = [];
+
+        // 转换为数组并创建组织映射
+        $orgArray = [];
+        foreach ($organizations as $org) {
+            $orgData = $org->toArray();
+            $orgData['children'] = [];
+            $orgData['hasChildren'] = false;
+            $orgArray[$org->id] = $orgData;
+            $organizationMap[$org->id] = $org;
+        }
+
+        // 构建树形结构
+        foreach ($organizations as $org) {
+            if ($org->parent_id === null) {
+                // 根节点 - 先不添加，等处理完所有关系后再添加
+            } else if (isset($orgArray[$org->parent_id])) {
+                // 添加到父节点的children中
+                $orgArray[$org->parent_id]['children'][] = &$orgArray[$org->id];
+                $orgArray[$org->parent_id]['hasChildren'] = true;
+            }
+        }
+
+        // 收集根节点
+        foreach ($organizations as $org) {
+            if ($org->parent_id === null) {
+                $rootNodes[] = $orgArray[$org->id];
+            }
+        }
+
+        return $rootNodes;
+    }
+
+    /**
+     * 递归计算组织总数
+     */
+    private function countAllOrganizations($organizations)
+    {
+        $count = count($organizations);
+        foreach ($organizations as $org) {
+            if (isset($org->children) && is_array($org->children)) {
+                $count += $this->countAllOrganizations($org->children);
+            }
+        }
+        return $count;
     }
 
     /**
@@ -88,10 +286,10 @@ class OrganizationController extends Controller
     {
         $user = Auth::user();
         $parentId = $request->input('parent_id');
-        
+
         // 根据用户权限获取可访问的组织范围
         $accessScope = $user->getDataAccessScope();
-        
+
         if ($accessScope['type'] === 'specific') {
             // 如果用户只能访问特定组织，则只显示这些组织
             $organizations = Organization::whereIn('id', $accessScope['organizations'])
@@ -107,6 +305,103 @@ class OrganizationController extends Controller
         return response()->json([
             'message' => '获取组织机构树成功',
             'data' => $organizations,
+            'code' => 200
+        ]);
+    }
+
+    /**
+     * 根据级别获取可选的父级组织
+     */
+    public function getParentOptions(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $level = $request->input('level');
+        $excludeId = $request->input('exclude_id'); // 编辑时排除自己
+
+        if (!$level || $level < 1 || $level > 5) {
+            return response()->json([
+                'message' => '无效的组织级别',
+                'code' => 400
+            ], 400);
+        }
+
+        // 根据用户权限获取可访问的组织范围
+        $accessScope = $user->getDataAccessScope();
+
+        $query = Organization::where('level', '<', $level)
+            ->where('status', 'active')
+            ->orderBy('level')
+            ->orderBy('sort_order');
+
+        // 编辑时排除自己和自己的后代
+        if ($excludeId) {
+            $excludeOrg = Organization::find($excludeId);
+            if ($excludeOrg) {
+                $query->where('id', '!=', $excludeId);
+                // 排除后代组织（通过路径判断）
+                $query->where(function($q) use ($excludeId) {
+                    $q->whereNull('full_path')
+                      ->orWhere('full_path', 'not like', "%/{$excludeId}/%");
+                });
+            }
+        }
+
+        if ($accessScope['type'] === 'specific') {
+            $query->whereIn('id', $accessScope['organizations']);
+        }
+
+        $organizations = $query->get(['id', 'name', 'level', 'parent_id', 'full_path']);
+
+        // 构建树形结构
+        $tree = $this->buildTreeFromFlat($organizations->toArray());
+
+        return response()->json([
+            'message' => '获取父级组织选项成功',
+            'data' => $tree,
+            'code' => 200
+        ]);
+    }
+
+    /**
+     * 从扁平数组构建树形结构
+     */
+    private function buildTreeFromFlat($organizations, $parentId = null)
+    {
+        $tree = [];
+        foreach ($organizations as $org) {
+            if ($org['parent_id'] == $parentId) {
+                $children = $this->buildTreeFromFlat($organizations, $org['id']);
+                $node = $org;
+                if (!empty($children)) {
+                    $node['children'] = $children;
+                }
+                $tree[] = $node;
+            }
+        }
+        return $tree;
+    }
+
+    /**
+     * 动态加载子组织
+     */
+    public function getChildren(Request $request, $parentId): JsonResponse
+    {
+        $user = Auth::user();
+        $accessScope = $user->getDataAccessScope();
+
+        if ($accessScope['type'] === 'none') {
+            return response()->json([
+                'message' => '获取子组织成功',
+                'data' => [],
+                'code' => 200
+            ]);
+        }
+
+        $children = $this->buildOrganizationTree($accessScope, $parentId);
+
+        return response()->json([
+            'message' => '获取子组织成功',
+            'data' => $children,
             'code' => 200
         ]);
     }

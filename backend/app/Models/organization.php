@@ -80,6 +80,16 @@ class Organization extends Model
     }
 
     /**
+     * 组织权限关系
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'organization_permissions')
+            ->withPivot(['access_type', 'granted_by', 'granted_at'])
+            ->withTimestamps();
+    }
+
+    /**
      * 递归获取所有子级组织
      */
     public function descendants(): HasMany
@@ -442,7 +452,7 @@ class Organization extends Model
             ->get();
 
         foreach ($organizations as $organization) {
-            $organization->children_tree = static::getTree($organization->id);
+            $organization->children = static::getTree($organization->id);
         }
 
         return $organizations;

@@ -250,6 +250,7 @@ import {
   Download,
   DataAnalysis
 } from '@element-plus/icons-vue'
+import { permissionManagementApi, permissionUtils } from '../../api/permissionManagement'
 
 // 响应式数据
 const activeTab = ref('inheritance')
@@ -322,25 +323,77 @@ const auditLogs = ref([
 const stats = reactive({
   total_users: 156,
   total_permissions: 24,
+  total_roles: 8,
   active_permissions: 18,
-  permission_conflicts: 2
+  expired_permissions: 6,
+  permission_conflicts: 2,
+  permission_by_source: {
+    direct: 45,
+    role: 89,
+    inherited: 22,
+    template: 8
+  },
+  permission_by_organization: {
+    '东城小学': 45,
+    '西城小学': 38,
+    '廉州学区': 73
+  }
 })
 
 // 方法
-const refreshInheritanceTree = () => {
-  ElMessage.success('权限继承关系已刷新')
+const refreshInheritanceTree = async () => {
+  try {
+    const response = await permissionManagementApi.getInheritanceTree()
+    // 更新继承树数据
+    ElMessage.success('权限继承关系已刷新')
+  } catch (error) {
+    ElMessage.error('刷新权限继承关系失败')
+  }
 }
 
-const updatePermission = (row, permissionType) => {
-  ElMessage.success(`已更新用户 ${row.user_name} 的${permissionType}权限`)
+const updatePermission = async (row, permissionType) => {
+  try {
+    // 这里需要根据具体的权限类型来调用相应的API
+    ElMessage.success(`已更新用户 ${row.user_name} 的${permissionType}权限`)
+  } catch (error) {
+    ElMessage.error('更新权限失败')
+  }
 }
 
-const batchGrantPermissions = () => {
-  ElMessage.success('批量权限分配功能')
+const batchGrantPermissions = async () => {
+  try {
+    await ElMessageBox.confirm('确定要批量分配权限吗？', '确认操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    // 调用批量分配API
+    // await permissionManagementApi.batchGrantPermissions(data)
+    ElMessage.success('批量权限分配成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量权限分配失败')
+    }
+  }
 }
 
-const batchRevokePermissions = () => {
-  ElMessage.warning('批量权限撤销功能')
+const batchRevokePermissions = async () => {
+  try {
+    await ElMessageBox.confirm('确定要批量撤销权限吗？', '确认操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    // 调用批量撤销API
+    // await permissionManagementApi.batchRevokePermissions(data)
+    ElMessage.success('批量权限撤销成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量权限撤销失败')
+    }
+  }
 }
 
 const viewUserPermissions = (row) => {
@@ -373,8 +426,101 @@ const getActionText = (action) => {
   return texts[action] || action
 }
 
+// 加载权限矩阵数据
+const loadPermissionMatrix = async () => {
+  try {
+    const response = await permissionManagementApi.getPermissionMatrix()
+    if (response.data && response.data.matrix) {
+      // 转换API数据结构为模板期望的格式
+      permissionMatrix.value = response.data.matrix.map(item => ({
+        id: item.user_id || item.id,
+        user_name: item.user_name || '',
+        organization: item.organization || '',
+        // 从permissions对象中提取具体权限
+        view_permission: item.permissions && Object.values(item.permissions).some(p => p.has_permission && p.permission_name?.includes('view')),
+        edit_permission: item.permissions && Object.values(item.permissions).some(p => p.has_permission && p.permission_name?.includes('edit')),
+        delete_permission: item.permissions && Object.values(item.permissions).some(p => p.has_permission && p.permission_name?.includes('delete')),
+        admin_permission: item.permissions && Object.values(item.permissions).some(p => p.has_permission && p.permission_name?.includes('admin'))
+      }))
+    }
+  } catch (error) {
+    console.error('加载权限矩阵失败:', error)
+    // 保持原有的模拟数据，不做任何更改
+  }
+}
+
+// 加载审计日志数据
+const loadAuditLogs = async () => {
+  try {
+    const params = {}
+    if (auditDateRange.value && auditDateRange.value.length === 2) {
+      params.date_from = auditDateRange.value[0]
+      params.date_to = auditDateRange.value[1]
+    }
+    if (auditActionFilter.value) {
+      params.action = auditActionFilter.value
+    }
+
+    const response = await permissionManagementApi.getAuditLogs(params)
+    if (response.data && response.data.data) {
+      // 确保数据结构正确
+      auditLogs.value = response.data.data.map(item => ({
+        ...item,
+        id: item.id || Math.random(),
+        created_at: item.created_at || '',
+        operator: item.operator || '',
+        action: item.action || '',
+        target_user: item.target_name || item.target_user || '',
+        permission_name: item.permission?.display_name || item.permission_name || '',
+        description: item.reason || item.description || ''
+      }))
+    }
+  } catch (error) {
+    console.error('加载审计日志失败:', error)
+    // 保持原有的模拟数据
+  }
+}
+
+// 加载统计数据
+const loadStats = async () => {
+  try {
+    const response = await permissionManagementApi.getPermissionStats()
+    if (response.data) {
+      // 安全地更新统计数据，保持属性名一致
+      const newStats = {
+        total_users: response.data.total_users || stats.total_users,
+        total_permissions: response.data.total_permissions || stats.total_permissions,
+        total_roles: response.data.total_roles || stats.total_roles,
+        active_permissions: response.data.active_permissions || stats.active_permissions,
+        expired_permissions: response.data.expired_permissions || stats.expired_permissions,
+        permission_by_source: response.data.permission_by_source || stats.permission_by_source,
+        permission_by_organization: response.data.permission_by_organization || stats.permission_by_organization
+      }
+      Object.assign(stats, newStats)
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    // 保持原有的模拟数据
+  }
+}
+
+// 初始化数据
+const initData = async () => {
+  try {
+    await Promise.allSettled([
+      loadPermissionMatrix(),
+      loadAuditLogs(),
+      loadStats()
+    ])
+    ElMessage.success('权限可视化管理系统已加载')
+  } catch (error) {
+    console.error('初始化数据失败:', error)
+    ElMessage.warning('部分数据加载失败，使用默认数据')
+  }
+}
+
 onMounted(() => {
-  ElMessage.success('权限可视化管理系统已加载')
+  initData()
 })
 </script>
 

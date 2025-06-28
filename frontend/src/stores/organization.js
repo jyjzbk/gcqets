@@ -13,10 +13,24 @@ export const useOrganizationStore = defineStore('organization', () => {
     loading.value = true
     try {
       const response = await organizationApi.getList(params)
-      organizations.value = response.data.data.data
-      total.value = response.data.data.total
+
+      // 处理不同的响应结构
+      if (response.data.data && Array.isArray(response.data.data)) {
+        // 新的树形结构API响应
+        organizations.value = response.data.data
+        total.value = response.data.total || response.data.data.length
+      } else if (response.data.data && response.data.data.data) {
+        // 原来的分页API响应
+        organizations.value = response.data.data.data
+        total.value = response.data.data.total
+      } else {
+        organizations.value = []
+        total.value = 0
+      }
+
       return response
     } catch (error) {
+      console.error('获取组织列表错误:', error)
       throw error
     } finally {
       loading.value = false
@@ -26,8 +40,29 @@ export const useOrganizationStore = defineStore('organization', () => {
   const getOrganizationTree = async (params = {}) => {
     try {
       const response = await organizationApi.getTree(params)
+      console.log('Organization tree API response:', response.data)
       organizationTree.value = response.data.data
+      console.log('Organization tree value set to:', organizationTree.value)
       return response
+    } catch (error) {
+      console.error('Get organization tree error:', error)
+      throw error
+    }
+  }
+
+  const getParentOptions = async (params = {}) => {
+    try {
+      const response = await organizationApi.getParentOptions(params)
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const getChildren = async (parentId) => {
+    try {
+      const response = await organizationApi.getChildren(parentId)
+      return response.data
     } catch (error) {
       throw error
     }
@@ -91,10 +126,12 @@ export const useOrganizationStore = defineStore('organization', () => {
     total,
     getOrganizations,
     getOrganizationTree,
+    getParentOptions,
+    getChildren,
     getOrganization,
     createOrganization,
     updateOrganization,
     deleteOrganization,
     moveOrganization
   }
-}) 
+})

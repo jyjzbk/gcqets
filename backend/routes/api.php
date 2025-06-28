@@ -67,6 +67,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('organizations')->group(function () {
         Route::get('/', [OrganizationController::class, 'index']);
         Route::get('/tree', [OrganizationController::class, 'tree']);
+        Route::get('/parent-options', [OrganizationController::class, 'getParentOptions']);
+        Route::get('/{parentId}/children', [OrganizationController::class, 'getChildren']);
         Route::get('/{organization}', [OrganizationController::class, 'show']);
         Route::post('/', [OrganizationController::class, 'store']); // ->middleware('permission:organization.create');
         Route::put('/{organization}', [OrganizationController::class, 'update']); // ->middleware('permission:organization.update');
@@ -222,5 +224,50 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/batch-grant', [PermissionManagementController::class, 'batchGrantPermissions'])->middleware('permission:permission.grant');
         Route::post('/batch-revoke', [PermissionManagementController::class, 'batchRevokePermissions'])->middleware('permission:permission.revoke');
         Route::post('/update', [PermissionManagementController::class, 'updatePermission'])->middleware('permission:permission.update');
+
+        // 权限可视化管理路由
+        Route::get('/inheritance-tree', [PermissionManagementController::class, 'getInheritanceTree']);
+        Route::get('/permission-matrix', [PermissionManagementController::class, 'getPermissionMatrix']);
+        Route::get('/audit-logs', [PermissionManagementController::class, 'getAuditLogs']);
+        Route::get('/stats', [PermissionManagementController::class, 'getPermissionStats']);
+        Route::get('/detect-conflicts', [PermissionManagementController::class, 'detectConflicts']);
+        Route::post('/recalculate-inheritance', [PermissionManagementController::class, 'recalculateInheritance']);
     });
+});
+
+// 测试路由（无需认证）
+Route::get('/permission-management/test-stats', [PermissionManagementController::class, 'getPermissionStats']);
+Route::get('/permission-management/test-matrix', [PermissionManagementController::class, 'getPermissionMatrix']);
+Route::get('/permission-management/test-audit', [PermissionManagementController::class, 'getAuditLogs']);
+Route::get('/permission-management/test-tree', [PermissionManagementController::class, 'getInheritanceTree']);
+
+// 修复错误类型学校的路由
+Route::get('/test/fix-wrong-type-schools', function () {
+    $schoolNames = ['角中小学', '大同镇中'];
+    $fixed = [];
+
+    foreach ($schoolNames as $schoolName) {
+        $org = Organization::where('name', $schoolName)->first();
+        if ($org && $org->type !== 'school') {
+            $oldType = $org->type;
+            $org->type = 'school';
+            $org->save();
+
+            $fixed[] = [
+                'id' => $org->id,
+                'name' => $org->name,
+                'old_type' => $oldType,
+                'new_type' => 'school'
+            ];
+        }
+    }
+
+    // 重新查询学校数量
+    $schoolsAfterFix = Organization::where('type', 'school')->count();
+
+    return response()->json([
+        'message' => '学校类型修复完成',
+        'fixed_schools' => $fixed,
+        'schools_count_after_fix' => $schoolsAfterFix
+    ]);
 });

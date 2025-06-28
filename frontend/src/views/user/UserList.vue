@@ -132,46 +132,48 @@
           </template>
         </el-table-column>
         
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              text
-              size="small"
-              @click="handleView(row)"
-            >
-              查看
-            </el-button>
+            <div class="action-buttons">
+              <el-button
+                type="primary"
+                text
+                size="small"
+                @click="handleView(row)"
+              >
+                查看
+              </el-button>
 
-            <el-button
-              v-if="canEditUser(row)"
-              type="primary"
-              text
-              size="small"
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
+              <el-button
+                v-if="canEditUser(row)"
+                type="primary"
+                text
+                size="small"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
 
-            <el-button
-              v-if="canAssignRole(row)"
-              type="warning"
-              text
-              size="small"
-              @click="handleAssignRole(row)"
-            >
-              分配角色
-            </el-button>
+              <el-button
+                v-if="canAssignRole(row)"
+                type="warning"
+                text
+                size="small"
+                @click="handleAssignRole(row)"
+              >
+                分配角色
+              </el-button>
 
-            <el-button
-              v-if="canDeleteUser(row)"
-              type="danger"
-              text
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+              <el-button
+                v-if="canDeleteUser(row)"
+                type="danger"
+                text
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -278,6 +280,18 @@
         <el-form-item label="用户">
           <span>{{ currentUser?.real_name }}</span>
         </el-form-item>
+
+        <el-form-item label="当前角色" v-if="currentUser?.roles && currentUser.roles.length > 0">
+          <el-tag
+            v-for="role in currentUser.roles"
+            :key="role.id"
+            type="info"
+            size="small"
+            style="margin-right: 8px; margin-bottom: 4px;"
+          >
+            {{ role.display_name }}
+          </el-tag>
+        </el-form-item>
         
         <el-form-item label="组织">
           <el-tree-select
@@ -297,18 +311,26 @@
             style="width: 100%"
           >
             <el-option
-              v-for="role in roleOptions"
+              v-for="role in availableRoleOptions"
               :key="role.id"
               :label="role.display_name"
               :value="role.id"
             />
           </el-select>
+          <div v-if="availableRoleOptions.length === 0" style="color: #999; font-size: 12px; margin-top: 4px;">
+            该用户已拥有所有可分配的角色
+          </div>
         </el-form-item>
       </el-form>
       
       <template #footer>
         <el-button @click="roleDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAssignRoleSubmit" :loading="roleLoading">
+        <el-button
+          type="primary"
+          @click="handleAssignRoleSubmit"
+          :loading="roleLoading"
+          :disabled="!roleForm.role_id || availableRoleOptions.length === 0"
+        >
           分配
         </el-button>
       </template>
@@ -317,7 +339,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { useOrganizationStore } from '../../stores/organization'
@@ -354,6 +376,16 @@ const roleLoading = ref(false)
 // 数据
 const organizationTree = ref([])
 const roleOptions = ref([])
+
+// 可分配的角色选项（过滤掉用户已有的角色）
+const availableRoleOptions = computed(() => {
+  if (!currentUser.value || !currentUser.value.roles) {
+    return roleOptions.value
+  }
+
+  const userRoleIds = currentUser.value.roles.map(role => role.id)
+  return roleOptions.value.filter(role => !userRoleIds.includes(role.id))
+})
 
 // 角色表单
 const roleForm = reactive({
@@ -476,6 +508,8 @@ const handleAssignRoleSubmit = async () => {
     getUsers()
   } catch (error) {
     console.error('Assign role error:', error)
+    const errorMessage = error.response?.data?.message || error.message || '分配角色失败'
+    ElMessage.error(errorMessage)
   } finally {
     roleLoading.value = false
   }
@@ -670,5 +704,20 @@ onMounted(async () => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+  min-width: 50px;
+  padding: 4px 8px;
 }
 </style> 

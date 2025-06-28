@@ -225,17 +225,19 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="viewSchool(row)">
-              查看
-            </el-button>
-            <el-button type="warning" size="small" @click="editSchool(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="deleteSchool(row)">
-              删除
-            </el-button>
+            <div class="action-buttons">
+              <el-button type="primary" size="small" @click="viewSchool(row)">
+                查看
+              </el-button>
+              <el-button type="warning" size="small" @click="editSchool(row)">
+                编辑
+              </el-button>
+              <el-button type="danger" size="small" @click="deleteSchool(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -729,11 +731,26 @@ const loadSchools = async () => {
     
     const response = await organizationApi.getList(params)
     const data = response.data.data
-    
-    schools.value = data.data
-    pagination.total = data.total
-    pagination.current_page = data.current_page
-    pagination.per_page = data.per_page
+
+    // 处理分页数据结构
+    if (data.data && Array.isArray(data.data)) {
+      // 分页响应结构
+      schools.value = data.data
+      pagination.total = data.total
+      pagination.current_page = data.current_page
+      pagination.per_page = data.per_page
+    } else if (Array.isArray(data)) {
+      // 直接数组响应结构
+      schools.value = data
+      pagination.total = data.length
+      pagination.current_page = 1
+      pagination.per_page = data.length
+    } else {
+      schools.value = []
+      pagination.total = 0
+      pagination.current_page = 1
+      pagination.per_page = 20
+    }
   } catch (error) {
     console.error('加载学校列表失败:', error)
     ElMessage.error('加载学校列表失败')
@@ -1470,5 +1487,20 @@ onMounted(() => {
 
 :deep(.el-dialog__body) {
   padding: 20px;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+  min-width: 50px;
+  padding: 5px 10px;
 }
 </style>

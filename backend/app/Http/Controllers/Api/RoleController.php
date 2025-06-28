@@ -118,7 +118,6 @@ class RoleController extends Controller
         try {
             DB::beginTransaction();
 
-            $data['created_by'] = $user->id;
             $role = Role::create($data);
 
             // 分配权限
@@ -173,7 +172,6 @@ class RoleController extends Controller
         try {
             DB::beginTransaction();
 
-            $data['updated_by'] = $user->id;
             $role->update($data);
 
             // 更新权限

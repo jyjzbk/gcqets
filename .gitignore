@@ -1,0 +1,71 @@
+# 依赖文件
+node_modules/
+vendor/
+
+# 环境配置
+.env
+.env.local
+.env.production
+.env.backup
+
+# 构建文件
+/frontend/dist/
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+/backend/storage/logs/*.log
+
+# 缓存文件
+/backend/bootstrap/cache/*.php
+/backend/storage/framework/cache/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/views/*
+
+# 数据库
+*.sqlite
+*.db
+
+# 临时文件
+tmp/
+temp/
+
+# Laravel特定
+/backend/public/storage
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+
+# 测试文件
+test_*.html
+simple_test.html
+
+# 备份文件
+*.zip
+*.bak
+*~
+
+# 中文文件名问题文件夹
+1学区划分有问题/
+fileback/
+20250627-*/
+
+# 大文件
+*.sql.zip
+*组织机构*.zip
+*功能总结*.zip

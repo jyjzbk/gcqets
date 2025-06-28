@@ -8,6 +8,14 @@ export const organizationApi = {
   getTree(params) {
     return request.get('/organizations/tree', { params })
   },
+
+  getParentOptions(params) {
+    return request.get('/organizations/parent-options', { params })
+  },
+
+  getChildren(parentId) {
+    return request.get(`/organizations/${parentId}/children`)
+  },
   
   getDetail(id) {
     return request.get(`/organizations/${id}`)

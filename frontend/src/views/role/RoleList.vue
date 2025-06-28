@@ -113,8 +113,8 @@
         
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status ? 'success' : 'danger'">
-              {{ row.status ? '启用' : '禁用' }}
+            <el-tag :type="(row.status === 'active' || row.status === true) ? 'success' : 'danger'">
+              {{ (row.status === 'active' || row.status === true) ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>

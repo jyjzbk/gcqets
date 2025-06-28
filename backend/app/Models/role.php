@@ -20,8 +20,8 @@ class Role extends Model
         'role_type',
         'status',
         'sort_order',
-        'created_by',
-        'updated_by'
+        'is_default',
+        'applicable_org_types'
     ];
 
     protected $casts = [
@@ -130,15 +130,13 @@ class Role extends Model
     public function syncPermissions(array $permissions, $assignedBy = null)
     {
         $syncData = [];
-        
+
         foreach ($permissions as $permissionId) {
             $syncData[$permissionId] = [
-                'status' => true,
-                'assigned_by' => $assignedBy,
-                'assigned_at' => now()
+                'access_type' => 'allow'
             ];
         }
-        
+
         return $this->permissions()->sync($syncData);
     }
 

@@ -128,6 +128,11 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
+            // 设置 name 字段（使用 real_name 或 username）
+            if (!isset($data['name'])) {
+                $data['name'] = $data['real_name'] ?? $data['username'];
+            }
+
             // 加密密码
             $data['password'] = Hash::make($data['password']);
 
@@ -139,21 +144,21 @@ class UserController extends Controller
                 foreach ($data['organization_ids'] as $orgId) {
                     $organizationData[$orgId] = [
                         'is_primary' => $orgId == $data['primary_organization_id'],
-                        'status' => true
+                        'status' => 'active'
                     ];
                 }
                 $user->organizations()->attach($organizationData);
             }
 
             // 分配角色
-            if (isset($data['role_ids'])) {
+            if (isset($data['role_ids']) && !empty($data['role_ids'])) {
                 $roleData = [];
                 foreach ($data['role_ids'] as $roleId) {
                     $roleData[$roleId] = [
                         'organization_id' => $data['primary_organization_id'],
-                        'assigned_by' => $currentUser->id,
-                        'assigned_at' => now(),
-                        'status' => true
+                        'created_by' => $currentUser->id,
+                        'status' => 'active',
+                        'scope_type' => 'current_org'
                     ];
                 }
                 $user->roles()->attach($roleData);
@@ -171,7 +176,13 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
+            \Log::error('Create user failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data' => $data
+            ]);
+
             return response()->json([
                 'message' => '创建用户失败: ' . $e->getMessage(),
                 'code' => 500
@@ -198,9 +209,18 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            // 如果更新了密码，需要加密
-            if (isset($data['password'])) {
+            // 设置 name 字段（使用 real_name 或 username）
+            if (!isset($data['name']) && isset($data['real_name'])) {
+                $data['name'] = $data['real_name'];
+            }
+
+            // 如果更新了密码，需要加密；如果密码为空，则不更新密码字段
+            if (isset($data['password']) && !empty($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
+            } else {
+                // 移除密码相关字段，不更新密码
+                unset($data['password']);
+                unset($data['password_confirmation']);
             }
 
             $user->update($data);
@@ -211,24 +231,27 @@ class UserController extends Controller
                 foreach ($data['organization_ids'] as $orgId) {
                     $organizationData[$orgId] = [
                         'is_primary' => $orgId == $data['primary_organization_id'],
-                        'status' => true
+                        'status' => 'active'
                     ];
                 }
                 $user->organizations()->sync($organizationData);
             }
 
             // 更新角色关联
-            if (isset($data['role_ids'])) {
+            if (isset($data['role_ids']) && !empty($data['role_ids'])) {
                 $roleData = [];
                 foreach ($data['role_ids'] as $roleId) {
                     $roleData[$roleId] = [
                         'organization_id' => $data['primary_organization_id'],
-                        'assigned_by' => $currentUser->id,
-                        'assigned_at' => now(),
-                        'status' => true
+                        'created_by' => $currentUser->id,
+                        'status' => 'active',
+                        'scope_type' => 'current_org'
                     ];
                 }
                 $user->roles()->sync($roleData);
+            } elseif (isset($data['role_ids']) && empty($data['role_ids'])) {
+                // 如果role_ids为空数组，则移除所有角色
+                $user->roles()->detach();
             }
 
             DB::commit();
@@ -243,7 +266,14 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
+            \Log::error('Update user failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data' => $data,
+                'user_id' => $user->id
+            ]);
+
             return response()->json([
                 'message' => '更新用户失败: ' . $e->getMessage(),
                 'code' => 500
@@ -314,6 +344,19 @@ class UserController extends Controller
         }
 
         try {
+            // 检查用户是否已经在该组织中拥有该角色
+            $existingRole = $user->roles()
+                ->where('role_id', $roleId)
+                ->where('organization_id', $organizationId)
+                ->first();
+
+            if ($existingRole) {
+                return response()->json([
+                    'message' => '用户已经拥有该角色',
+                    'code' => 400
+                ], 400);
+            }
+
             $user->assignRole($roleId, $organizationId, $currentUser->id);
 
             return response()->json([
@@ -322,6 +365,14 @@ class UserController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Assign role failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id,
+                'role_id' => $roleId,
+                'organization_id' => $organizationId
+            ]);
+
             return response()->json([
                 'message' => '分配角色失败: ' . $e->getMessage(),
                 'code' => 500

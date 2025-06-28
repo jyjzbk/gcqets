@@ -39,15 +39,71 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="组织类型" prop="type">
+              <el-select
+                v-model="form.type"
+                placeholder="请选择组织类型"
+                style="width: 100%"
+                @change="handleTypeChange"
+              >
+                <el-option label="省级" value="province" />
+                <el-option label="市级" value="city" />
+                <el-option label="区县级" value="district" />
+                <el-option label="学区" value="education_zone" />
+                <el-option label="学校" value="school" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="组织层级" prop="level">
+              <el-input-number
+                v-model="form.level"
+                :min="1"
+                :max="5"
+                placeholder="组织层级"
+                style="width: 100%"
+                :disabled="true"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
         
         <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="组织级别" prop="level">
+              <el-select
+                v-model="form.level"
+                placeholder="请选择组织级别"
+                style="width: 100%"
+                @change="onLevelChange"
+              >
+                <el-option label="省级" :value="1" />
+                <el-option label="市级" :value="2" />
+                <el-option label="区县级" :value="3" />
+                <el-option label="学区级" :value="4" />
+                <el-option label="学校级" :value="5" />
+              </el-select>
+              <div class="level-hint">
+                <el-text size="small" type="info">
+                  请先选择组织级别，再选择父级组织
+                </el-text>
+              </div>
+            </el-form-item>
+          </el-col>
+
           <el-col :span="12">
             <el-form-item label="父级组织" prop="parent_id">
               <el-tree-select
                 v-model="form.parent_id"
-                :data="organizationTree"
+                :data="parentOptions"
                 :props="treeProps"
-                placeholder="请选择父级组织（留空表示根组织）"
+                :placeholder="getParentPlaceholder()"
+                :disabled="!form.level || loadingParentOptions"
+                :loading="loadingParentOptions"
                 check-strictly
                 clearable
                 style="width: 100%"
@@ -55,18 +111,11 @@
               <div v-if="isEdit && currentParentName" class="parent-info">
                 当前父级组织：{{ currentParentName }}
               </div>
-            </el-form-item>
-          </el-col>
-          
-          <el-col :span="12">
-            <el-form-item label="组织级别" prop="level">
-              <el-select v-model="form.level" placeholder="请选择组织级别" style="width: 100%">
-                <el-option label="省级" :value="1" />
-                <el-option label="市级" :value="2" />
-                <el-option label="区县级" :value="3" />
-                <el-option label="学区级" :value="4" />
-                <el-option label="学校级" :value="5" />
-              </el-select>
+              <div v-if="form.level" class="level-hint">
+                <el-text size="small" type="info">
+                  只显示{{ getLevelName(form.level) }}以上级别的组织
+                </el-text>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -168,6 +217,8 @@ const organizationStore = useOrganizationStore()
 const formRef = ref()
 const loading = ref(false)
 const organizationTree = ref([])
+const parentOptions = ref([])
+const loadingParentOptions = ref(false)
 const currentParentName = ref('')
 
 const isEdit = computed(() => !!route.params.id)
@@ -176,8 +227,9 @@ const isEdit = computed(() => !!route.params.id)
 const form = reactive({
   name: '',
   code: '',
+  type: 'school', // 默认为学校类型
   parent_id: null,
-  level: 1,
+  level: 5, // 默认为学校层级
   description: '',
   status: true,
   sort_order: 0,
@@ -197,6 +249,9 @@ const rules = {
     { required: true, message: '请输入组织编码', trigger: 'blur' },
     { max: 50, message: '组织编码不能超过50个字符', trigger: 'blur' },
     { pattern: /^[A-Z0-9_-]+$/, message: '组织编码只能包含大写字母、数字、下划线和连字符', trigger: 'blur' }
+  ],
+  type: [
+    { required: true, message: '请选择组织类型', trigger: 'change' }
   ],
   level: [
     { required: true, message: '请选择组织级别', trigger: 'change' }
@@ -223,6 +278,29 @@ const treeProps = {
   }
 }
 
+// 获取级别名称
+const getLevelName = (level) => {
+  const levelMap = {
+    1: '省级',
+    2: '市级',
+    3: '区县级',
+    4: '学区级',
+    5: '学校级'
+  }
+  return levelMap[level] || '未知'
+}
+
+// 获取父级组织占位符文本
+const getParentPlaceholder = () => {
+  if (!form.level) {
+    return '请先选择组织级别'
+  }
+  if (form.level === 1) {
+    return '省级为根组织，无需选择父级'
+  }
+  return `请选择${getLevelName(form.level)}的父级组织`
+}
+
 // 获取组织树
 const getOrganizationTree = async () => {
   try {
@@ -240,6 +318,67 @@ const getOrganizationTree = async () => {
   } catch (error) {
     console.error('Get organization tree error:', error)
   }
+}
+
+// 获取父级组织选项
+const getParentOptions = async (level) => {
+  if (!level || level === 1) {
+    parentOptions.value = []
+    return
+  }
+
+  try {
+    loadingParentOptions.value = true
+    const params = { level }
+
+    // 编辑时排除自己
+    if (isEdit.value) {
+      params.exclude_id = route.params.id
+    }
+
+    const response = await organizationStore.getParentOptions(params)
+    parentOptions.value = response.data || []
+
+    console.log('Parent options loaded:', parentOptions.value)
+  } catch (error) {
+    console.error('Get parent options error:', error)
+    ElMessage.error('获取父级组织选项失败')
+    parentOptions.value = []
+  } finally {
+    loadingParentOptions.value = false
+  }
+}
+
+// 组织类型与层级的映射
+const typeToLevelMap = {
+  'province': 1,
+  'city': 2,
+  'district': 3,
+  'education_zone': 4,
+  'school': 5
+}
+
+// 处理组织类型变化
+const handleTypeChange = (type) => {
+  const newLevel = typeToLevelMap[type] || 1
+  form.level = newLevel
+
+  // 清空父级组织选择
+  form.parent_id = null
+
+  // 获取新的父级组织选项
+  getParentOptions(newLevel)
+}
+
+// 组织级别变化处理
+const onLevelChange = async (newLevel) => {
+  console.log('Level changed to:', newLevel)
+
+  // 清空父级组织选择
+  form.parent_id = null
+
+  // 获取新的父级组织选项
+  await getParentOptions(newLevel)
 }
 
 // 构建树结构的辅助函数
@@ -352,9 +491,16 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   await getOrganizationTree()
-  
+
   if (isEdit.value) {
     await getOrganization()
+    // 编辑时根据当前级别加载父级选项
+    if (form.level) {
+      await getParentOptions(form.level)
+    }
+  } else {
+    // 新建时默认加载省级以上的选项（实际上省级没有父级）
+    await getParentOptions(form.level)
   }
 })
 </script>
@@ -384,5 +530,9 @@ onMounted(async () => {
   padding: 4px 8px;
   border-radius: 4px;
   border-left: 3px solid #409eff;
+}
+
+.level-hint {
+  margin-top: 5px;
 }
 </style>

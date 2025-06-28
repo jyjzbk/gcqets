@@ -56,11 +56,22 @@
           <el-menu-item index="/roles/create">创建角色</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/permission-test">
-          <el-icon><Grid /></el-icon>
-          <span>权限可视化管理</span>
-          <el-tag size="small" type="success" style="margin-left: 8px">✅</el-tag>
-        </el-menu-item>
+        <el-sub-menu index="permissions">
+          <template #title>
+            <el-icon><Grid /></el-icon>
+            <span>权限管理</span>
+          </template>
+          <el-menu-item index="/education-permissions">
+            <el-icon><School /></el-icon>
+            <span>教育权限管理</span>
+            <el-tag size="small" type="primary" style="margin-left: 8px">简化版</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/permission-test">
+            <el-icon><Grid /></el-icon>
+            <span>权限可视化管理</span>
+            <el-tag size="small" type="success" style="margin-left: 8px">完整版</el-tag>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     

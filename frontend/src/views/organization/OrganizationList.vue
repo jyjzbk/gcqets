@@ -58,7 +58,13 @@
     <!-- 数据表格 -->
     <el-card>
       <div class="table-header">
-        <span>共 {{ organizationStore.total }} 条记录</span>
+        <div class="table-info">
+          <span v-if="isSearchMode">搜索结果：共 {{ organizationStore.total }} 条记录</span>
+          <span v-else>组织机构树形结构</span>
+          <el-tag v-if="!isSearchMode" size="small" type="info" style="margin-left: 10px">
+            点击展开查看下级组织
+          </el-tag>
+        </div>
         <el-button
           type="primary"
           text
@@ -71,10 +77,14 @@
       
       <el-table
         v-loading="organizationStore.loading"
-        :data="organizationStore.organizations"
+        :data="organizationData"
         style="width: 100%"
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        lazy
+        :load="loadChildren"
+        :expand-row-keys="expandedKeys"
+        @expand-change="handleExpandChange"
       >
         <el-table-column prop="name" label="组织名称" min-width="200">
           <template #default="{ row }">
@@ -155,8 +165,8 @@
         </el-table-column>
       </el-table>
       
-      <!-- 分页 -->
-      <div class="pagination-wrapper">
+      <!-- 分页（仅搜索模式显示） -->
+      <div v-if="isSearchMode" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
@@ -243,17 +253,60 @@ const pagination = reactive({
 const detailDialogVisible = ref(false)
 const currentOrganization = ref(null)
 
+// 树形结构相关
+const organizationData = ref([])
+const expandedKeys = ref([])
+const isSearchMode = ref(false)
+
 // 获取组织列表
 const getOrganizations = async () => {
   try {
-    const params = {
-      ...searchForm,
-      page: pagination.page,
-      per_page: pagination.pageSize
+    // 检查是否有搜索条件
+    const hasSearchConditions = searchForm.search || searchForm.level || searchForm.status !== null
+    isSearchMode.value = hasSearchConditions
+
+    if (hasSearchConditions) {
+      // 搜索模式：获取扁平列表
+      const params = {
+        ...searchForm,
+        page: pagination.page,
+        per_page: pagination.pageSize
+      }
+      await organizationStore.getOrganizations(params)
+      organizationData.value = organizationStore.organizations
+    } else {
+      // 树形模式：获取根级组织
+      await organizationStore.getOrganizations({})
+      organizationData.value = organizationStore.organizations
     }
-    await organizationStore.getOrganizations(params)
   } catch (error) {
     console.error('Get organizations error:', error)
+  }
+}
+
+// 懒加载子组织
+const loadChildren = async (row, treeNode, resolve) => {
+  try {
+    const response = await organizationStore.getChildren(row.id)
+    const children = response.data || []
+    resolve(children)
+  } catch (error) {
+    console.error('Load children error:', error)
+    resolve([])
+  }
+}
+
+// 处理展开/收起
+const handleExpandChange = (row, expanded) => {
+  if (expanded) {
+    if (!expandedKeys.value.includes(row.id)) {
+      expandedKeys.value.push(row.id)
+    }
+  } else {
+    const index = expandedKeys.value.indexOf(row.id)
+    if (index > -1) {
+      expandedKeys.value.splice(index, 1)
+    }
   }
 }
 
@@ -483,5 +536,23 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+}
+
+/* 树形表格样式优化 */
+:deep(.el-table__expand-icon) {
+  color: #409eff;
+}
+
+:deep(.el-table__row) {
+  cursor: pointer;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #f5f7fa;
 }
 </style> 

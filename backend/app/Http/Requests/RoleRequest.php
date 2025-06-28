@@ -52,7 +52,8 @@ class RoleRequest extends FormRequest
                 'max:50'
             ],
             'status' => [
-                'boolean'
+                'nullable',
+                'in:active,inactive'
             ],
             'is_system' => [
                 'boolean'
@@ -90,6 +91,7 @@ class RoleRequest extends FormRequest
             'level.min' => '角色级别不能小于1',
             'level.max' => '角色级别不能大于5',
             'guard_name.max' => '守卫名称不能超过50个字符',
+            'status.in' => '状态值不正确',
             'sort_order.integer' => '排序值必须是整数',
             'sort_order.min' => '排序值不能小于0',
             'permission_ids.array' => '权限列表格式不正确',

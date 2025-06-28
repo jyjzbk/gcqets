@@ -54,11 +54,10 @@
           
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
-              <el-switch
-                v-model="form.status"
-                active-text="启用"
-                inactive-text="禁用"
-              />
+              <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
+                <el-option label="启用" value="active" />
+                <el-option label="禁用" value="inactive" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -121,7 +120,7 @@ const form = reactive({
   display_name: '',
   description: '',
   level: 4,
-  status: true,
+  status: 'active',
   is_system: false,
   sort_order: 0,
   permission_ids: []
@@ -171,7 +170,7 @@ const getRole = async () => {
       display_name: role.display_name,
       description: role.description || '',
       level: role.level,
-      status: role.status,
+      status: role.status === true ? 'active' : (role.status === false ? 'inactive' : role.status),
       is_system: role.is_system,
       sort_order: role.sort_order,
       permission_ids: role.permissions?.map(p => p.id) || []

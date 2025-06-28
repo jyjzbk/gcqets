@@ -64,21 +64,22 @@ class UserRequest extends FormRequest
                 'max:100'
             ],
             'status' => [
-                'boolean'
+                'nullable',
+                'in:active,inactive,locked,pending'
             ],
             'gender' => [
                 'nullable',
-                'in:male,female,unknown'
+                'in:male,female,other'
             ],
-            'birthday' => [
+            'birth_date' => [
                 'nullable',
                 'date'
             ],
-            'join_date' => [
+            'hire_date' => [
                 'nullable',
                 'date'
             ],
-            'remark' => [
+            'remarks' => [
                 'nullable',
                 'string',
                 'max:500'
@@ -120,13 +121,17 @@ class UserRequest extends FormRequest
             $rules['password'] = [
                 'nullable',
                 'string',
-                'min:6',
-                'confirmed'
+                'min:6'
             ];
             $rules['password_confirmation'] = [
                 'nullable',
                 'string'
             ];
+
+            // 只有当密码不为空时才需要确认密码
+            if ($this->filled('password')) {
+                $rules['password'][] = 'confirmed';
+            }
         }
 
         return $rules;
@@ -155,9 +160,9 @@ class UserRequest extends FormRequest
             'position.max' => '职位不能超过100个字符',
             'department.max' => '部门不能超过100个字符',
             'gender.in' => '性别值不正确',
-            'birthday.date' => '生日格式不正确',
-            'join_date.date' => '入职日期格式不正确',
-            'remark.max' => '备注不能超过500个字符',
+            'birth_date.date' => '生日格式不正确',
+            'hire_date.date' => '入职日期格式不正确',
+            'remarks.max' => '备注不能超过500个字符',
             'primary_organization_id.required' => '主要组织不能为空',
             'primary_organization_id.exists' => '主要组织不存在',
             'organization_ids.array' => '组织列表格式不正确',

@@ -36,6 +36,11 @@ class OrganizationRequest extends FormRequest
                 'regex:/^[A-Z0-9_-]+$/',
                 Rule::unique('organizations')->ignore($organizationId)
             ],
+            'type' => [
+                'required',
+                'string',
+                Rule::in(['province', 'city', 'district', 'education_zone', 'school'])
+            ],
             'parent_id' => [
                 'nullable',
                 'exists:organizations,id'
@@ -95,6 +100,8 @@ class OrganizationRequest extends FormRequest
             'code.max' => '组织编码不能超过50个字符',
             'code.regex' => '组织编码只能包含大写字母、数字、下划线和连字符',
             'code.unique' => '组织编码已存在',
+            'type.required' => '组织类型不能为空',
+            'type.in' => '组织类型必须是省级、市级、区县级、学区或学校中的一种',
             'parent_id.exists' => '父级组织不存在',
             'level.required' => '组织级别不能为空',
             'level.integer' => '组织级别必须是整数',

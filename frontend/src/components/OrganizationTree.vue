@@ -152,8 +152,9 @@ const currentNode = ref(null)
 const form = reactive({
   name: '',
   code: '',
+  type: 'school', // 默认为学校类型
   parent_id: null,
-  level: 1,
+  level: 5, // 默认为学校层级
   description: '',
   status: true
 })
@@ -233,11 +234,21 @@ const handleNodeDrop = async (draggingNode, dropNode, dropType) => {
   }
 }
 
+// 层级到类型的映射
+const levelToTypeMap = {
+  1: 'province',
+  2: 'city',
+  3: 'district',
+  4: 'education_zone',
+  5: 'school'
+}
+
 // 添加根组织
 const handleAdd = () => {
   currentNode.value = null
   form.parent_id = null
   form.level = 1
+  form.type = 'province'
   dialogVisible.value = true
 }
 
@@ -245,7 +256,9 @@ const handleAdd = () => {
 const handleAddChild = (data) => {
   currentNode.value = null
   form.parent_id = data.id
-  form.level = Math.min(data.level + 1, 5)
+  const newLevel = Math.min(data.level + 1, 5)
+  form.level = newLevel
+  form.type = levelToTypeMap[newLevel] || 'school'
   dialogVisible.value = true
 }
 
@@ -313,8 +326,9 @@ const resetForm = () => {
   Object.assign(form, {
     name: '',
     code: '',
+    type: 'school', // 默认为学校类型
     parent_id: null,
-    level: 1,
+    level: 5, // 默认为学校层级
     description: '',
     status: true
   })

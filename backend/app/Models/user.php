@@ -29,7 +29,7 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'gender',
-        'birth_date',
+        'birth_date', // 数据库字段名
         'id_card',
         'address',
         'employee_id',
@@ -38,9 +38,10 @@ class User extends Authenticatable
         'department',
         'position',
         'title',
-        'hire_date',
+        'hire_date', // 数据库字段名
         'preferences',
-        'remarks',
+        'remarks', // 数据库字段名
+        'real_name',
         'primary_organization_id'
     ];
 
@@ -66,7 +67,6 @@ class User extends Authenticatable
         'hire_date' => 'date',
         'last_login_at' => 'datetime',
         'preferences' => 'json',
-        'status' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
@@ -76,7 +76,7 @@ class User extends Authenticatable
      * 默认属性值
      */
     protected $attributes = [
-        'status' => true,
+        'status' => 'pending',
         'user_type' => 'teacher',
         'gender' => 'other'
     ];
@@ -115,7 +115,7 @@ class User extends Authenticatable
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class, 'user_permissions')
-            ->withPivot(['granted_by', 'granted_at', 'expires_at', 'status'])
+            ->withPivot(['organization_id', 'granted_by', 'granted_at', 'expires_at', 'status', 'source'])
             ->withTimestamps();
     }
 
@@ -125,6 +125,21 @@ class User extends Authenticatable
     public function rolesInOrganization($organizationId): BelongsToMany
     {
         return $this->roles()->wherePivot('organization_id', $organizationId);
+    }
+
+    /**
+     * 为用户分配角色
+     */
+    public function assignRole($roleId, $organizationId, $createdBy)
+    {
+        return $this->roles()->attach($roleId, [
+            'organization_id' => $organizationId,
+            'created_by' => $createdBy,
+            'status' => 'active',
+            'scope_type' => 'current_org',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
     }
 
     /**
@@ -185,19 +200,34 @@ class User extends Authenticatable
      */
     public function getDataAccessScope(): array
     {
+        // 首先检查是否是系统管理员
+        if ($this->hasRole('system_admin')) {
+            return ['type' => 'all', 'organizations' => []];
+        }
+
         $maxLevel = 5; // 默认最低级别
         $organizationIds = [];
 
         // 获取用户所有角色中的最高级别
-        foreach ($this->organizations as $organization) {
-            $roles = $this->rolesInOrganization($organization->id)->get();
-            foreach ($roles as $role) {
-                if ($role->level < $maxLevel) {
-                    $maxLevel = $role->level;
-                }
+        $allRoles = $this->roles()->get();
+        foreach ($allRoles as $role) {
+            if ($role->level < $maxLevel) {
+                $maxLevel = $role->level;
             }
-            $organizationIds[] = $organization->id;
         }
+
+        // 获取用户所属的所有组织ID
+        foreach ($this->organizations as $organization) {
+            $organizationIds[] = $organization->id;
+            // 添加该组织的所有后代组织
+            $descendants = $organization->getDescendants();
+            foreach ($descendants as $descendant) {
+                $organizationIds[] = $descendant->id;
+            }
+        }
+
+        // 去重
+        $organizationIds = array_unique($organizationIds);
 
         // 根据用户的最高角色级别确定数据访问范围
         switch ($maxLevel) {

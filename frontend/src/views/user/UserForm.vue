@@ -99,7 +99,7 @@
               <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
                 <el-option label="男" value="male" />
                 <el-option label="女" value="female" />
-                <el-option label="未知" value="unknown" />
+                <el-option label="其他" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -107,20 +107,20 @@
         
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="生日" prop="birthday">
+            <el-form-item label="生日" prop="birth_date">
               <el-date-picker
-                v-model="form.birthday"
+                v-model="form.birth_date"
                 type="date"
                 placeholder="请选择生日"
                 style="width: 100%"
               />
             </el-form-item>
           </el-col>
-          
+
           <el-col :span="12">
-            <el-form-item label="入职日期" prop="join_date">
+            <el-form-item label="入职日期" prop="hire_date">
               <el-date-picker
-                v-model="form.join_date"
+                v-model="form.hire_date"
                 type="date"
                 placeholder="请选择入职日期"
                 style="width: 100%"
@@ -145,11 +145,12 @@
           
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
-              <el-switch
-                v-model="form.status"
-                active-text="启用"
-                inactive-text="禁用"
-              />
+              <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
+                <el-option label="激活" value="active" />
+                <el-option label="未激活" value="inactive" />
+                <el-option label="锁定" value="locked" />
+                <el-option label="待审核" value="pending" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -181,9 +182,9 @@
           </el-select>
         </el-form-item>
         
-        <el-form-item label="备注" prop="remark">
+        <el-form-item label="备注" prop="remarks">
           <el-input
-            v-model="form.remark"
+            v-model="form.remarks"
             type="textarea"
             :rows="4"
             placeholder="请输入备注信息"
@@ -201,12 +202,32 @@
             maxlength="50"
           />
         </el-form-item>
-        
+
         <el-form-item v-if="!isEdit" label="确认密码" prop="password_confirmation">
           <el-input
             v-model="form.password_confirmation"
             type="password"
             placeholder="请再次输入密码"
+            show-password
+            maxlength="50"
+          />
+        </el-form-item>
+
+        <el-form-item v-if="isEdit" label="新密码" prop="password">
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="留空则不修改密码"
+            show-password
+            maxlength="50"
+          />
+        </el-form-item>
+
+        <el-form-item v-if="isEdit && form.password" label="确认新密码" prop="password_confirmation">
+          <el-input
+            v-model="form.password_confirmation"
+            type="password"
+            placeholder="请再次输入新密码"
             show-password
             maxlength="50"
           />
@@ -254,11 +275,11 @@ const form = reactive({
   employee_id: '',
   position: '',
   department: '',
-  status: true,
-  gender: 'unknown',
-  birthday: null,
-  join_date: null,
-  remark: '',
+  status: 'active',
+  gender: 'other',
+  birth_date: null,
+  hire_date: null,
+  remarks: '',
   primary_organization_id: null,
   organization_ids: [],
   role_ids: []
@@ -291,7 +312,10 @@ const rules = {
     { required: !isEdit.value, message: '请确认密码', trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
-        if (value !== form.password) {
+        // 在编辑模式下，如果密码为空，则不需要验证确认密码
+        if (isEdit.value && (!form.password || form.password.trim() === '')) {
+          callback()
+        } else if (value !== form.password) {
           callback(new Error('两次输入的密码不一致'))
         } else {
           callback()
@@ -314,6 +338,7 @@ const getOrganizationTree = async () => {
   try {
     await organizationStore.getOrganizationTree()
     organizationTree.value = organizationStore.organizationTree
+    console.log('UserForm - Organization tree loaded:', organizationTree.value)
   } catch (error) {
     console.error('Get organization tree error:', error)
   }
@@ -343,11 +368,11 @@ const getUser = async () => {
       employee_id: user.employee_id || '',
       position: user.position || '',
       department: user.department || '',
-      status: user.status,
+      status: user.status === true ? 'active' : (user.status === false ? 'inactive' : user.status),
       gender: user.gender,
-      birthday: user.birthday,
-      join_date: user.join_date,
-      remark: user.remark || '',
+      birth_date: user.birth_date,
+      hire_date: user.hire_date,
+      remarks: user.remarks || '',
       primary_organization_id: user.primary_organization_id,
       organization_ids: user.organizations?.map(org => org.id) || [],
       role_ids: user.roles?.map(role => role.id) || []
@@ -362,15 +387,27 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     loading.value = true
-    
+
+    // 准备提交数据
+    const submitData = { ...form }
+
+    // 如果是编辑模式且密码为空，则不发送密码字段
+    if (isEdit.value && (!submitData.password || submitData.password.trim() === '')) {
+      delete submitData.password
+      delete submitData.password_confirmation
+    }
+
+    console.log('Submit data:')
+    console.table(JSON.parse(JSON.stringify(submitData)))
+
     if (isEdit.value) {
-      await userStore.updateUser(route.params.id, form)
+      await userStore.updateUser(route.params.id, submitData)
       ElMessage.success('更新成功')
     } else {
-      await userStore.createUser(form)
+      await userStore.createUser(submitData)
       ElMessage.success('创建成功')
     }
-    
+
     router.push('/users')
   } catch (error) {
     console.error('Submit error:', error)

@@ -81,6 +81,18 @@ const routes = [
         meta: { title: '权限可视化管理' }
       },
       {
+        path: 'education-permissions',
+        name: 'EducationPermissionManager',
+        component: () => import('../views/permission/EducationPermissionManager.vue'),
+        meta: { title: '教育权限管理' }
+      },
+      {
+        path: 'permission-test',
+        name: 'PermissionVisualizationTest',
+        component: () => import('../views/permission/PermissionVisualizationTest.vue'),
+        meta: { title: '权限管理测试' }
+      },
+      {
         path: 'permission-test',
         name: 'PermissionTest',
         component: () => import('../views/permission/PermissionTest.vue'),
