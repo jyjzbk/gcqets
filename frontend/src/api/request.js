@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/auth'
 
 // 创建axios实例
 const request = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'http://127.0.0.1:8000/api',
   timeout: 30000 // 增加到30秒
 })
 

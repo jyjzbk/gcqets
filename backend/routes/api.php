@@ -11,6 +11,16 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\SchoolImportController;
 use App\Http\Controllers\EducationZoneController;
 use App\Http\Controllers\PermissionTemplateController;
+use App\Http\Controllers\ExperimentCatalogController;
+use App\Http\Controllers\CurriculumStandardController;
+use App\Http\Controllers\PhotoTemplateController;
+use App\Http\Controllers\CatalogVersionController;
+use App\Http\Controllers\EquipmentCategoryController;
+use App\Http\Controllers\EquipmentController;
+use App\Http\Controllers\EquipmentBorrowingController;
+use App\Http\Controllers\MaterialCategoryController;
+use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\MaterialUsageController;
 use App\Models\Organization;
 use App\Models\User;
 use App\Models\Role;
@@ -232,6 +242,110 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/stats', [PermissionManagementController::class, 'getPermissionStats']);
         Route::get('/detect-conflicts', [PermissionManagementController::class, 'detectConflicts']);
         Route::post('/recalculate-inheritance', [PermissionManagementController::class, 'recalculateInheritance']);
+    });
+
+    // 实验目录管理路由
+    Route::prefix('experiment-catalogs')->group(function () {
+        Route::get('/', [ExperimentCatalogController::class, 'index']);
+        Route::get('/options', [ExperimentCatalogController::class, 'options']);
+        Route::get('/{id}', [ExperimentCatalogController::class, 'show']);
+        Route::post('/', [ExperimentCatalogController::class, 'store']);
+        Route::put('/{id}', [ExperimentCatalogController::class, 'update']);
+        Route::delete('/{id}', [ExperimentCatalogController::class, 'destroy']);
+
+        // 版本管理路由
+        Route::prefix('{catalogId}/versions')->group(function () {
+            Route::get('/', [CatalogVersionController::class, 'index']);
+            Route::get('/{versionId}', [CatalogVersionController::class, 'show']);
+            Route::post('/compare', [CatalogVersionController::class, 'compare']);
+            Route::post('/{versionId}/rollback', [CatalogVersionController::class, 'rollback']);
+            Route::get('/statistics', [CatalogVersionController::class, 'statistics']);
+        });
+    });
+
+    // 课程标准管理路由
+    Route::prefix('curriculum-standards')->group(function () {
+        Route::get('/', [CurriculumStandardController::class, 'index']);
+        Route::get('/options', [CurriculumStandardController::class, 'options']);
+        Route::get('/valid', [CurriculumStandardController::class, 'validStandards']);
+        Route::get('/{id}', [CurriculumStandardController::class, 'show']);
+        Route::post('/', [CurriculumStandardController::class, 'store']);
+        Route::put('/{id}', [CurriculumStandardController::class, 'update']);
+        Route::delete('/{id}', [CurriculumStandardController::class, 'destroy']);
+    });
+
+    // 照片模板管理路由
+    Route::prefix('photo-templates')->group(function () {
+        Route::get('/', [PhotoTemplateController::class, 'index']);
+        Route::get('/options', [PhotoTemplateController::class, 'options']);
+        Route::get('/matching', [PhotoTemplateController::class, 'getMatchingTemplates']);
+        Route::get('/{id}', [PhotoTemplateController::class, 'show']);
+        Route::post('/', [PhotoTemplateController::class, 'store']);
+        Route::put('/{id}', [PhotoTemplateController::class, 'update']);
+        Route::delete('/{id}', [PhotoTemplateController::class, 'destroy']);
+    });
+
+    // 设备分类管理路由
+    Route::prefix('equipment-categories')->group(function () {
+        Route::get('/', [EquipmentCategoryController::class, 'index']);
+        Route::get('/tree', [EquipmentCategoryController::class, 'tree']);
+        Route::get('/{id}', [EquipmentCategoryController::class, 'show']);
+        Route::post('/', [EquipmentCategoryController::class, 'store']);
+        Route::put('/{id}', [EquipmentCategoryController::class, 'update']);
+        Route::delete('/{id}', [EquipmentCategoryController::class, 'destroy']);
+    });
+
+    // 设备管理路由
+    Route::prefix('equipment')->group(function () {
+        Route::get('/', [EquipmentController::class, 'index']);
+        Route::get('/statistics', [EquipmentController::class, 'statistics']);
+        Route::get('/{id}', [EquipmentController::class, 'show']);
+        Route::post('/', [EquipmentController::class, 'store']);
+        Route::put('/{id}', [EquipmentController::class, 'update']);
+        Route::delete('/{id}', [EquipmentController::class, 'destroy']);
+    });
+
+    // 设备借用管理路由
+    Route::prefix('equipment-borrowings')->group(function () {
+        Route::get('/', [EquipmentBorrowingController::class, 'index']);
+        Route::get('/statistics', [EquipmentBorrowingController::class, 'statistics']);
+        Route::get('/{id}', [EquipmentBorrowingController::class, 'show']);
+        Route::post('/', [EquipmentBorrowingController::class, 'store']);
+        Route::post('/{id}/approve', [EquipmentBorrowingController::class, 'approve']);
+        Route::post('/{id}/borrow', [EquipmentBorrowingController::class, 'borrow']);
+        Route::post('/{id}/return', [EquipmentBorrowingController::class, 'returnEquipment']);
+        Route::post('/{id}/cancel', [EquipmentBorrowingController::class, 'cancel']);
+    });
+
+    // 材料分类管理路由
+    Route::prefix('material-categories')->group(function () {
+        Route::get('/', [MaterialCategoryController::class, 'index']);
+        Route::get('/tree', [MaterialCategoryController::class, 'tree']);
+        Route::get('/{id}', [MaterialCategoryController::class, 'show']);
+        Route::post('/', [MaterialCategoryController::class, 'store']);
+        Route::put('/{id}', [MaterialCategoryController::class, 'update']);
+        Route::delete('/{id}', [MaterialCategoryController::class, 'destroy']);
+    });
+
+    // 材料管理路由
+    Route::prefix('materials')->group(function () {
+        Route::get('/', [MaterialController::class, 'index']);
+        Route::get('/statistics', [MaterialController::class, 'statistics']);
+        Route::get('/{id}', [MaterialController::class, 'show']);
+        Route::post('/', [MaterialController::class, 'store']);
+        Route::put('/{id}', [MaterialController::class, 'update']);
+        Route::delete('/{id}', [MaterialController::class, 'destroy']);
+        Route::post('/{id}/adjust-stock', [MaterialController::class, 'adjustStock']);
+    });
+
+    // 材料使用记录管理路由
+    Route::prefix('material-usages')->group(function () {
+        Route::get('/', [MaterialUsageController::class, 'index']);
+        Route::get('/statistics', [MaterialUsageController::class, 'statistics']);
+        Route::get('/{id}', [MaterialUsageController::class, 'show']);
+        Route::post('/', [MaterialUsageController::class, 'store']);
+        Route::put('/{id}', [MaterialUsageController::class, 'update']);
+        Route::delete('/{id}', [MaterialUsageController::class, 'destroy']);
     });
 });
 

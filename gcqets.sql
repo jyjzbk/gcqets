@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1
--- 生成日期： 2025-06-28 01:47:46
+-- 生成日期： 2025-07-02 05:55:24
 -- 服务器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.2.12
 
@@ -253,7 +253,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (36, '2025_06_25_080002_create_permission_audit_logs_table', 10),
 (37, '2025_06_25_080003_create_permission_conflicts_table', 10),
 (38, '2025_06_25_112210_create_school_import_logs_table', 11),
-(39, '2025_06_27_143637_add_primary_organization_id_to_users_table', 12);
+(39, '2025_06_27_143637_add_primary_organization_id_to_users_table', 12),
+(40, '2025_06_28_020000_add_source_to_user_permissions_table', 13);
 
 -- --------------------------------------------------------
 
@@ -928,9 +929,9 @@ INSERT INTO `permission_role` (`id`, `permission_id`, `role_id`, `conditions`, `
 (67, 12, 8, NULL, 'allow', '2025-06-20 01:16:59', '2025-06-20 01:16:59'),
 (68, 10, 8, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
 (69, 10, 9, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(70, 11, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(71, 12, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(72, 10, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
+(70, 11, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-27 17:45:11'),
+(71, 12, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-27 17:45:11'),
+(72, 10, 10, NULL, 'allow', '2025-06-20 01:17:00', '2025-06-27 17:45:11'),
 (73, 13, 1, NULL, 'allow', '2025-06-20 03:11:54', '2025-06-20 03:11:54'),
 (74, 14, 1, NULL, 'allow', '2025-06-20 03:11:54', '2025-06-20 03:11:54'),
 (75, 15, 1, NULL, 'allow', '2025-06-20 03:11:54', '2025-06-20 03:11:54'),
@@ -941,7 +942,8 @@ INSERT INTO `permission_role` (`id`, `permission_id`, `role_id`, `conditions`, `
 (80, 20, 1, NULL, 'allow', '2025-06-20 03:45:28', '2025-06-20 03:45:28'),
 (81, 21, 1, NULL, 'allow', '2025-06-20 03:45:28', '2025-06-20 03:45:28'),
 (82, 22, 1, NULL, 'allow', '2025-06-20 03:45:28', '2025-06-20 03:45:28'),
-(83, 39, 1, NULL, 'allow', '2025-06-26 04:44:26', '2025-06-26 04:44:26');
+(83, 39, 1, NULL, 'allow', '2025-06-26 04:44:26', '2025-06-26 04:44:26'),
+(86, 12, 14, NULL, 'allow', '2025-06-27 17:46:41', '2025-06-27 17:46:41');
 
 -- --------------------------------------------------------
 
@@ -1028,12 +1030,13 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (23, 'App\\Models\\User', 1, 'auth-token', '14df7a73dc3ebcd7a2ff327f987dc5f85959b94c24b594e5427d50caca80d9d4', '[\"*\"]', '2025-06-25 23:59:35', NULL, '2025-06-25 00:49:46', '2025-06-25 23:59:35'),
 (24, 'App\\Models\\User', 1, 'auth-token', 'd2f6638468aacb19a5324efcf436b0bb76cc300ad1ae0ed56e73436b6b351024', '[\"*\"]', '2025-06-25 23:54:48', NULL, '2025-06-25 23:54:25', '2025-06-25 23:54:48'),
 (25, 'App\\Models\\User', 1, 'auth-token', '6de918783c954bb0717974e3860d61682228ffbcd4a20821a22918120d96da06', '[\"*\"]', '2025-06-26 03:55:09', NULL, '2025-06-26 00:15:41', '2025-06-26 03:55:09'),
-(27, 'App\\Models\\User', 1, 'auth-token', 'aae9dfefe15ce1011e0ae2766de6b0d551c0759a34c1cdbcc20b1cc093dd4871', '[\"*\"]', '2025-06-27 06:48:47', NULL, '2025-06-26 04:05:49', '2025-06-27 06:48:47'),
 (35, 'App\\Models\\User', 1, 'auth-token', 'f82493c119c4640595b6808c11b642b3bffc0d56bd677924d10ad9e293d112aa', '[\"*\"]', '2025-06-26 18:41:11', NULL, '2025-06-26 18:37:37', '2025-06-26 18:41:11'),
 (37, 'App\\Models\\User', 1, 'auth-token', 'a7f6a969173c253b0e9786683ec69d7a89311cffacb51cafb75c4898c8e5428e', '[\"*\"]', '2025-06-27 04:31:12', NULL, '2025-06-27 04:31:11', '2025-06-27 04:31:12'),
 (38, 'App\\Models\\User', 1, 'auth-token', '7814813786f3b393bf1566f02b18b9bd484499343e7474848e7f7ab07c1294ea', '[\"*\"]', '2025-06-27 04:35:05', NULL, '2025-06-27 04:35:04', '2025-06-27 04:35:05'),
 (39, 'App\\Models\\User', 1, 'auth-token', '641c5a1c10ff3ba71fe125267659563b3a728f7026330e1039a87082c314ea50', '[\"*\"]', '2025-06-27 04:37:49', NULL, '2025-06-27 04:37:35', '2025-06-27 04:37:49'),
-(43, 'App\\Models\\User', 1, 'auth-token', '512c6de032ad3aabf838337cc3c0e25df082e5dbbf5e8cb3bae6e7e188bd14ad', '[\"*\"]', '2025-06-27 15:37:38', NULL, '2025-06-27 15:36:53', '2025-06-27 15:37:38');
+(43, 'App\\Models\\User', 1, 'auth-token', '512c6de032ad3aabf838337cc3c0e25df082e5dbbf5e8cb3bae6e7e188bd14ad', '[\"*\"]', '2025-06-27 16:52:33', NULL, '2025-06-27 15:36:53', '2025-06-27 16:52:33'),
+(44, 'App\\Models\\User', 1, 'auth-token', 'fd019b6b572a0ee6bbe9ea4483a93a6e396b58499d49155ad81e58a740c6a388', '[\"*\"]', '2025-06-27 16:54:27', NULL, '2025-06-27 16:54:15', '2025-06-27 16:54:27'),
+(47, 'App\\Models\\User', 1, 'auth-token', 'fe5d0d73243cb803fe5ee21f1d31ef0f8d96c69570a5dc18379eb3b781866d50', '[\"*\"]', '2025-06-27 18:42:02', NULL, '2025-06-27 17:40:13', '2025-06-27 18:42:02');
 
 -- --------------------------------------------------------
 
@@ -1074,7 +1077,8 @@ INSERT INTO `roles` (`id`, `name`, `display_name`, `description`, `role_type`, `
 (10, 'lab_admin', '实验管理员', '实验室管理员，负责实验教学管理', 'custom', 5, '[\"school\"]', 'active', 10, 0, '2025-06-20 01:16:55', '2025-06-27 04:49:18', NULL),
 (11, 'org_admin', '组织管理员', '组织管理员角色', 'custom', 2, NULL, 'active', 2, 0, '2025-06-20 05:26:23', '2025-06-20 05:26:23', NULL),
 (12, 'dept_admin', '部门管理员', '部门管理员角色', 'custom', 3, NULL, 'active', 3, 0, '2025-06-20 05:26:23', '2025-06-20 05:26:23', NULL),
-(13, 'normal_user', '普通用户', '普通用户角色', 'custom', 4, NULL, 'active', 4, 0, '2025-06-20 05:26:23', '2025-06-20 05:26:23', NULL);
+(13, 'normal_user', '普通用户', '普通用户角色', 'custom', 4, NULL, 'active', 4, 0, '2025-06-20 05:26:23', '2025-06-20 05:26:23', NULL),
+(14, 'student', '学生', '学生用户', 'custom', 4, NULL, 'active', 0, 0, '2025-06-27 17:46:41', '2025-06-27 17:46:50', '2025-06-27 17:46:50');
 
 -- --------------------------------------------------------
 
@@ -1105,7 +1109,8 @@ INSERT INTO `role_user` (`id`, `user_id`, `role_id`, `organization_id`, `scope_t
 (1, 1, 1, 3, 'all_subordinates', '2020-01-01', NULL, 'active', NULL, 1, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
 (2, 2, 5, 4, 'all_subordinates', '2018-09-01', NULL, 'active', NULL, 1, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
 (3, 3, 6, 5, 'current_org', '2015-09-01', NULL, 'active', NULL, 2, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
-(4, 6, 5, 16, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-06-27 15:32:29', '2025-06-27 15:32:29');
+(4, 6, 5, 16, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-06-27 15:32:29', '2025-06-27 17:23:19'),
+(7, 3, 5, 5, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-06-27 17:24:24', '2025-06-27 17:24:24');
 
 -- --------------------------------------------------------
 
@@ -1250,7 +1255,7 @@ INSERT INTO `users` (`id`, `username`, `name`, `real_name`, `gender`, `birth_dat
 (1, 'sysadmin', '系统管理员', '系统管理员', 'male', '1980-01-01', '13800000001', '130100198001010001', '河北省石家庄市长安区', '信息中心', '系统管理员', '高级工程师', '2020-01-01', '2025-06-20 05:40:05', '127.0.0.1', NULL, NULL, 'sysadmin@gcqets.edu.cn', 3, NULL, 'SYS001', 'admin', 'active', '2025-06-27 04:29:12', '$2y$12$8bZMXLBYC0witTO1ZbLKfuMEinI9C5eH6TEwHhTLq8nlFcEYEkgJS', NULL, '2025-06-20 01:16:56', '2025-06-27 04:29:12', NULL),
 (2, 'lianzhou_admin', '赵学区主任', '赵学区主任', 'male', '1975-05-15', '13800000002', '130100197505150002', '河北省石家庄市藁城区廉州镇', '廉州学区', '学区主任', '高级教师', '2018-09-01', NULL, NULL, NULL, NULL, 'zhao.admin@gcqets.edu.cn', 4, NULL, 'LZ001', 'supervisor', 'active', '2025-06-27 04:29:12', '$2y$12$cSPnC/RvfHreCpqYU3liLu3Hnc9ZNQP5QYgBTBvXtekCcCBzNUypq', NULL, '2025-06-20 01:16:56', '2025-06-27 04:29:12', NULL),
 (3, 'dongcheng_principal', '刘校长', '刘校长', 'male', '1970-08-20', '13800000003', '130100197008200003', '河北省石家庄市藁城区廉州镇东城村', '校长室', '校长', '特级教师', '2015-09-01', NULL, NULL, NULL, NULL, 'liu.principal@dongcheng.edu.cn', 5, NULL, 'DC001', 'admin', 'active', '2025-06-27 04:29:12', '$2y$12$sdzWbPf86hvvl.Z.lnCx2.UDcXqFbaNpnv5gMiTmHPr4QDXTzDWsi', NULL, '2025-06-20 01:16:57', '2025-06-27 04:29:12', NULL),
-(6, 'gs_admin', 'hh', 'hh', 'male', NULL, '15123445677', NULL, NULL, 'quzhongxin', 'gly', NULL, NULL, NULL, NULL, NULL, NULL, 'hh78@163.com', NULL, 16, '123', 'teacher', 'active', NULL, '$2y$12$NF8dtcrLqelgpGe7J1aXAuqHulAWi4TagV.xLYrbZsCT1KXiW/UxK', NULL, '2025-06-27 15:32:29', '2025-06-27 15:32:29', NULL);
+(6, 'gs_admin', 'hh', 'hh', 'male', NULL, '15123445677', NULL, NULL, 'quzhongxin', 'gly', NULL, NULL, NULL, NULL, NULL, '1133', 'hh78@163.com', NULL, 16, '123', 'teacher', 'active', NULL, '$2y$12$NF8dtcrLqelgpGe7J1aXAuqHulAWi4TagV.xLYrbZsCT1KXiW/UxK', NULL, '2025-06-27 15:32:29', '2025-06-27 17:23:18', NULL);
 
 -- --------------------------------------------------------
 
@@ -1276,7 +1281,7 @@ INSERT INTO `user_organizations` (`id`, `user_id`, `organization_id`, `is_primar
 (1, 1, 3, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
 (2, 2, 4, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
 (3, 3, 5, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(5, 6, 20, 0, 'active', '2025-06-27 15:32:29', '2025-06-27 15:32:29');
+(5, 6, 20, 0, 'active', '2025-06-27 15:32:29', '2025-06-27 17:23:19');
 
 -- --------------------------------------------------------
 
@@ -1293,6 +1298,7 @@ CREATE TABLE `user_permissions` (
   `granted_at` timestamp NULL DEFAULT NULL COMMENT '授权时间',
   `expires_at` timestamp NULL DEFAULT NULL COMMENT '过期时间',
   `status` enum('active','inactive') NOT NULL DEFAULT 'active' COMMENT '状态',
+  `source` enum('direct','role','inherited','template') NOT NULL DEFAULT 'direct' COMMENT '权限来源',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1645,7 +1651,7 @@ ALTER TABLE `jobs`
 -- 使用表AUTO_INCREMENT `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- 使用表AUTO_INCREMENT `organizations`
@@ -1687,7 +1693,7 @@ ALTER TABLE `permission_inheritance`
 -- 使用表AUTO_INCREMENT `permission_role`
 --
 ALTER TABLE `permission_role`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
 
 --
 -- 使用表AUTO_INCREMENT `permission_templates`
@@ -1699,19 +1705,19 @@ ALTER TABLE `permission_templates`
 -- 使用表AUTO_INCREMENT `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- 使用表AUTO_INCREMENT `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- 使用表AUTO_INCREMENT `role_user`
 --
 ALTER TABLE `role_user`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- 使用表AUTO_INCREMENT `school_import_logs`

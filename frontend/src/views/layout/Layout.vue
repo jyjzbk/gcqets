@@ -72,6 +72,48 @@
             <el-tag size="small" type="success" style="margin-left: 8px">完整版</el-tag>
           </el-menu-item>
         </el-sub-menu>
+
+        <el-sub-menu index="/experiment">
+          <template #title>
+            <el-icon><DataAnalysis /></el-icon>
+            <span>基础数据管理</span>
+          </template>
+          <el-menu-item index="/experiment-catalogs">
+            <el-icon><Document /></el-icon>
+            <span>实验目录管理</span>
+          </el-menu-item>
+          <el-menu-item index="/curriculum-standards">
+            <el-icon><Reading /></el-icon>
+            <span>课程标准管理</span>
+          </el-menu-item>
+          <el-menu-item index="/photo-templates">
+            <el-icon><Picture /></el-icon>
+            <span>照片模板管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="/equipment">
+          <template #title>
+            <el-icon><Box /></el-icon>
+            <span>设备物料管理</span>
+          </template>
+          <el-menu-item index="/equipment">
+            <el-icon><Monitor /></el-icon>
+            <span>设备管理</span>
+          </el-menu-item>
+          <el-menu-item index="/materials">
+            <el-icon><Goods /></el-icon>
+            <span>材料管理</span>
+          </el-menu-item>
+          <el-menu-item index="/equipment-borrowings">
+            <el-icon><User /></el-icon>
+            <span>设备借用管理</span>
+          </el-menu-item>
+          <el-menu-item index="/material-usages">
+            <el-icon><DataLine /></el-icon>
+            <span>材料使用记录</span>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     
@@ -125,7 +167,15 @@ import {
   Key,
   Grid,
   ArrowDown,
-  School
+  School,
+  DataAnalysis,
+  Document,
+  Reading,
+  Picture,
+  Box,
+  Goods,
+  TrendCharts,
+  DataLine
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()

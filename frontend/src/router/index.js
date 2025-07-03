@@ -115,6 +115,50 @@ const routes = [
         name: 'SchoolDashboard',
         component: () => import('../views/organization/SchoolManagement.vue'),
         meta: { title: '统计仪表板' }
+      },
+      // 实验目录管理路由
+      {
+        path: 'experiment-catalogs',
+        name: 'ExperimentCatalogs',
+        component: () => import('../views/experiment/ExperimentCatalogList.vue'),
+        meta: { title: '实验目录管理' }
+      },
+      {
+        path: 'curriculum-standards',
+        name: 'CurriculumStandards',
+        component: () => import('../views/experiment/CurriculumStandardList.vue'),
+        meta: { title: '课程标准管理' }
+      },
+      {
+        path: 'photo-templates',
+        name: 'PhotoTemplates',
+        component: () => import('../views/experiment/PhotoTemplateList.vue'),
+        meta: { title: '照片模板管理' }
+      },
+      // 设备物料管理路由
+      {
+        path: 'equipment',
+        name: 'Equipment',
+        component: () => import('../views/equipment/EquipmentList.vue'),
+        meta: { title: '设备管理' }
+      },
+      {
+        path: 'materials',
+        name: 'Materials',
+        component: () => import('../views/equipment/MaterialList.vue'),
+        meta: { title: '材料管理' }
+      },
+      {
+        path: 'equipment-borrowings',
+        name: 'EquipmentBorrowings',
+        component: () => import('../views/equipment/BorrowingList.vue'),
+        meta: { title: '设备借用管理' }
+      },
+      {
+        path: 'material-usages',
+        name: 'MaterialUsages',
+        component: () => import('../views/equipment/UsageList.vue'),
+        meta: { title: '材料使用记录' }
       }
     ]
   }

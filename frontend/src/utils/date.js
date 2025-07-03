@@ -97,4 +97,22 @@ export function getDateRange(type) {
   }
   
   return [start, end]
-} 
+}
+
+/**
+ * 格式化日期时间
+ * @param {Date|string} date 日期对象或日期字符串
+ * @returns {string} 格式化后的日期时间字符串
+ */
+export function formatDateTime(date) {
+  return formatDate(date, 'YYYY-MM-DD HH:mm:ss')
+}
+
+/**
+ * 格式化日期（不包含时间）
+ * @param {Date|string} date 日期对象或日期字符串
+ * @returns {string} 格式化后的日期字符串
+ */
+export function formatDateOnly(date) {
+  return formatDate(date, 'YYYY-MM-DD')
+}

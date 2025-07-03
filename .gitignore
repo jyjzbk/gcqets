@@ -53,7 +53,12 @@ yarn-error.log
 
 # 测试文件
 test_*.html
+test_*.php
 simple_test.html
+quick_fix.php
+*_test.*
+create_test_user.php
+reset_password.php
 
 # 备份文件
 *.zip
