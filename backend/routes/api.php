@@ -21,6 +21,11 @@ use App\Http\Controllers\EquipmentBorrowingController;
 use App\Http\Controllers\MaterialCategoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialUsageController;
+use App\Http\Controllers\Api\ExperimentPlanController;
+use App\Http\Controllers\Api\ExperimentRecordController;
+use App\Http\Controllers\Api\ExperimentReviewController;
+use App\Http\Controllers\Api\ExperimentCalendarController;
+use App\Http\Controllers\Api\ExperimentMonitorController;
 use App\Models\Organization;
 use App\Models\User;
 use App\Models\Role;
@@ -346,6 +351,68 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [MaterialUsageController::class, 'store']);
         Route::put('/{id}', [MaterialUsageController::class, 'update']);
         Route::delete('/{id}', [MaterialUsageController::class, 'destroy']);
+    });
+
+    // 实验计划管理路由
+    Route::prefix('experiment-plans')->group(function () {
+        Route::get('/', [ExperimentPlanController::class, 'index']);
+        Route::post('/', [ExperimentPlanController::class, 'store']);
+        Route::get('/statistics', [ExperimentPlanController::class, 'getStatistics']);
+        Route::get('/catalog-options', [ExperimentPlanController::class, 'getCatalogOptions']);
+        Route::get('/standard-options', [ExperimentPlanController::class, 'getStandardOptions']);
+        Route::get('/{id}', [ExperimentPlanController::class, 'show']);
+        Route::put('/{id}', [ExperimentPlanController::class, 'update']);
+        Route::delete('/{id}', [ExperimentPlanController::class, 'destroy']);
+        Route::post('/{id}/submit', [ExperimentPlanController::class, 'submit']);
+        Route::post('/{id}/approve', [ExperimentPlanController::class, 'approve']);
+        Route::post('/{id}/reject', [ExperimentPlanController::class, 'reject']);
+    });
+
+    // 实验记录管理路由
+    Route::prefix('experiment-records')->group(function () {
+        Route::get('/', [ExperimentRecordController::class, 'index']);
+        Route::post('/', [ExperimentRecordController::class, 'store']);
+        Route::get('/statistics', [ExperimentRecordController::class, 'getStatistics']);
+        Route::get('/plan-options', [ExperimentRecordController::class, 'getPlanOptions']);
+        Route::get('/{id}', [ExperimentRecordController::class, 'show']);
+        Route::put('/{id}', [ExperimentRecordController::class, 'update']);
+        Route::delete('/{id}', [ExperimentRecordController::class, 'destroy']);
+        Route::post('/{id}/submit', [ExperimentRecordController::class, 'submit']);
+        Route::post('/{id}/confirm-equipment', [ExperimentRecordController::class, 'confirmEquipment']);
+        Route::get('/{id}/validate', [ExperimentRecordController::class, 'validateData']);
+        Route::post('/{id}/photos', [ExperimentRecordController::class, 'uploadPhoto']);
+        Route::delete('/{recordId}/photos/{photoId}', [ExperimentRecordController::class, 'deletePhoto']);
+    });
+
+    // 实验记录审核路由
+    Route::prefix('experiment-review')->group(function () {
+        Route::get('/pending', [ExperimentReviewController::class, 'getPendingRecords']);
+        Route::post('/batch', [ExperimentReviewController::class, 'batchReview']);
+        Route::get('/statistics', [ExperimentReviewController::class, 'getReviewStatistics']);
+        Route::get('/trend', [ExperimentReviewController::class, 'getReviewTrend']);
+        Route::get('/ranking', [ExperimentReviewController::class, 'getReviewerRanking']);
+        Route::post('/{id}/approve', [ExperimentReviewController::class, 'approve']);
+        Route::post('/{id}/reject', [ExperimentReviewController::class, 'reject']);
+        Route::post('/{id}/revision', [ExperimentReviewController::class, 'requestRevision']);
+        Route::post('/{id}/force-complete', [ExperimentReviewController::class, 'forceComplete']);
+        Route::post('/{id}/ai-check', [ExperimentReviewController::class, 'aiPhotoCheck']);
+        Route::get('/{id}/logs', [ExperimentReviewController::class, 'getReviewLogs']);
+    });
+
+    // 实验日历路由
+    Route::prefix('experiment-calendar')->group(function () {
+        Route::get('/data', [ExperimentCalendarController::class, 'getCalendarData']);
+        Route::get('/overdue-alerts', [ExperimentCalendarController::class, 'getOverdueAlerts']);
+        Route::get('/experiment/{id}', [ExperimentCalendarController::class, 'getExperimentDetails']);
+        Route::post('/check-conflicts', [ExperimentCalendarController::class, 'checkConflicts']);
+    });
+
+    // 实验监控路由
+    Route::prefix('experiment-monitor')->group(function () {
+        Route::get('/dashboard', [ExperimentMonitorController::class, 'getDashboard']);
+        Route::get('/progress-stats', [ExperimentMonitorController::class, 'getProgressStats']);
+        Route::get('/anomaly-analysis', [ExperimentMonitorController::class, 'getAnomalyAnalysis']);
+        Route::get('/realtime-stats', [ExperimentMonitorController::class, 'getRealTimeStats']);
     });
 });
 

@@ -8,6 +8,11 @@ import { permission, role } from './utils/permission'
 import './style.css'
 import App from './App.vue'
 
+// 开发环境图标检查
+if (import.meta.env.DEV) {
+  import('./utils/iconCheck.js')
+}
+
 const app = createApp(App)
 const pinia = createPinia()
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1
--- 生成日期： 2025-07-02 05:55:24
+-- 生成日期： 2025-07-04 16:24:48
 -- 服务器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.2.12
 
@@ -44,6 +44,103 @@ CREATE TABLE `cache_locks` (
   `owner` varchar(255) NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `catalog_import_logs`
+--
+
+CREATE TABLE `catalog_import_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `filename` varchar(255) NOT NULL COMMENT '导入文件名',
+  `file_size` bigint(20) NOT NULL COMMENT '文件大小（字节）',
+  `file_path` varchar(255) NOT NULL COMMENT '文件存储路径',
+  `organization_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '目标组织ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '导入用户ID',
+  `import_type` enum('standard_library','custom','template') NOT NULL COMMENT '导入类型',
+  `status` enum('pending','processing','success','partial_success','failed') NOT NULL DEFAULT 'pending' COMMENT '导入状态',
+  `total_rows` int(11) NOT NULL DEFAULT 0 COMMENT '总行数',
+  `success_rows` int(11) NOT NULL DEFAULT 0 COMMENT '成功行数',
+  `failed_rows` int(11) NOT NULL DEFAULT 0 COMMENT '失败行数',
+  `skipped_rows` int(11) NOT NULL DEFAULT 0 COMMENT '跳过行数',
+  `error_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '错误详情' CHECK (json_valid(`error_details`)),
+  `warning_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '警告详情' CHECK (json_valid(`warning_details`)),
+  `import_options` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '导入选项' CHECK (json_valid(`import_options`)),
+  `validation_rules` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '校验规则' CHECK (json_valid(`validation_rules`)),
+  `started_at` timestamp NULL DEFAULT NULL COMMENT '开始时间',
+  `completed_at` timestamp NULL DEFAULT NULL COMMENT '完成时间',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `catalog_versions`
+--
+
+CREATE TABLE `catalog_versions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `catalog_id` bigint(20) UNSIGNED NOT NULL COMMENT '实验目录ID',
+  `version` varchar(50) NOT NULL COMMENT '版本号',
+  `version_description` text DEFAULT NULL COMMENT '版本描述',
+  `changes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '变更内容' CHECK (json_valid(`changes`)),
+  `catalog_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '目录数据快照' CHECK (json_valid(`catalog_data`)),
+  `change_type` enum('create','update','delete','restore') NOT NULL COMMENT '变更类型',
+  `change_reason` text DEFAULT NULL COMMENT '变更原因',
+  `status` enum('active','archived','rollback') NOT NULL DEFAULT 'active' COMMENT '状态',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `catalog_versions`
+--
+
+INSERT INTO `catalog_versions` (`id`, `catalog_id`, `version`, `version_description`, `changes`, `catalog_data`, `change_type`, `change_reason`, `status`, `created_by`, `created_at`) VALUES
+(1, 1, '1.0.0', '版本 1.0.0 - 创建', '{\"action\":\"\\u521b\\u5efa\\u5b9e\\u9a8c\\u76ee\\u5f55\"}', '{\"id\":1,\"name\":\"\\u89c2\\u5bdf\\u690d\\u7269\\u7684\\u6839\\u3001\\u830e\\u3001\\u53f6\",\"code\":\"EXP_SCI_001\",\"subject\":\"science\",\"grade\":\"grade3\",\"textbook_version\":\"\\u4eba\\u6559\\u72482022\",\"experiment_type\":\"group\",\"description\":\"\\u901a\\u8fc7\\u89c2\\u5bdf\\u4e0d\\u540c\\u690d\\u7269\\u7684\\u6839\\u3001\\u830e\\u3001\\u53f6\\uff0c\\u4e86\\u89e3\\u690d\\u7269\\u7684\\u57fa\\u672c\\u7ed3\\u6784\\u7279\\u5f81\\u3002\",\"objectives\":\"1. \\u8ba4\\u8bc6\\u690d\\u7269\\u7684\\u57fa\\u672c\\u7ed3\\u6784\\\\n2. \\u5b66\\u4f1a\\u4f7f\\u7528\\u653e\\u5927\\u955c\\u89c2\\u5bdf\\\\n3. \\u57f9\\u517b\\u89c2\\u5bdf\\u8bb0\\u5f55\\u80fd\\u529b\",\"materials\":\"\\u653e\\u5927\\u955c\\u3001\\u5404\\u79cd\\u690d\\u7269\\u6807\\u672c\\u3001\\u8bb0\\u5f55\\u8868\\u3001\\u5f69\\u8272\\u94c5\\u7b14\",\"procedures\":\"1. \\u51c6\\u5907\\u89c2\\u5bdf\\u6750\\u6599\\\\n2. \\u4f7f\\u7528\\u653e\\u5927\\u955c\\u4ed4\\u7ec6\\u89c2\\u5bdf\\u690d\\u7269\\u7684\\u6839\\u3001\\u830e\\u3001\\u53f6\\\\n3. \\u8bb0\\u5f55\\u89c2\\u5bdf\\u7ed3\\u679c\\\\n4. \\u5bf9\\u6bd4\\u4e0d\\u540c\\u690d\\u7269\\u7684\\u7279\\u5f81\\\\n5. \\u603b\\u7ed3\\u690d\\u7269\\u7ed3\\u6784\\u7684\\u5171\\u540c\\u70b9\\u548c\\u4e0d\\u540c\\u70b9\",\"safety_notes\":\"1. \\u5c0f\\u5fc3\\u4f7f\\u7528\\u653e\\u5927\\u955c\\uff0c\\u907f\\u514d\\u9633\\u5149\\u76f4\\u5c04\\u773c\\u775b\\\\n2. \\u8f7b\\u62ff\\u8f7b\\u653e\\u690d\\u7269\\u6807\\u672c\\\\n3. \\u4fdd\\u6301\\u5b9e\\u9a8c\\u53f0\\u9762\\u6574\\u6d01\",\"duration_minutes\":40,\"student_count\":4,\"difficulty_level\":\"easy\",\"status\":\"active\",\"curriculum_standard_id\":1,\"organization_id\":5,\"created_by\":3,\"updated_by\":null,\"extra_data\":{\"season\":\"spring\",\"location\":\"classroom\",\"equipment_needed\":[\"magnifier\",\"specimens\",\"worksheets\"]},\"created_at\":\"2025-07-02T06:51:30.000000Z\",\"updated_at\":\"2025-07-02T06:51:30.000000Z\",\"deleted_at\":null}', 'create', '初始创建', 'active', 3, '2025-07-01 22:51:30'),
+(2, 2, '1.0.0', '版本 1.0.0 - 创建', '{\"action\":\"\\u521b\\u5efa\\u5b9e\\u9a8c\\u76ee\\u5f55\"}', '{\"id\":2,\"name\":\"\\u9178\\u78b1\\u6307\\u793a\\u5242\\u7684\\u53d8\\u8272\\u5b9e\\u9a8c\",\"code\":\"EXP_CHEM_001\",\"subject\":\"chemistry\",\"grade\":\"grade9\",\"textbook_version\":\"\\u4eba\\u6559\\u72482022\",\"experiment_type\":\"demonstration\",\"description\":\"\\u901a\\u8fc7\\u9178\\u78b1\\u6307\\u793a\\u5242\\u5728\\u4e0d\\u540c\\u6eb6\\u6db2\\u4e2d\\u7684\\u53d8\\u8272\\u73b0\\u8c61\\uff0c\\u8ba4\\u8bc6\\u9178\\u78b1\\u6027\\u8d28\\u3002\",\"objectives\":\"1. \\u8ba4\\u8bc6\\u5e38\\u89c1\\u7684\\u9178\\u78b1\\u6307\\u793a\\u5242\\\\n2. \\u89c2\\u5bdf\\u6307\\u793a\\u5242\\u7684\\u53d8\\u8272\\u73b0\\u8c61\\\\n3. \\u7406\\u89e3\\u9178\\u78b1\\u7684\\u6982\\u5ff5\",\"materials\":\"\\u77f3\\u854a\\u8bd5\\u6db2\\u3001\\u915a\\u915e\\u8bd5\\u6db2\\u3001\\u7a00\\u76d0\\u9178\\u3001\\u7a00\\u6c22\\u6c27\\u5316\\u94a0\\u6eb6\\u6db2\\u3001\\u8bd5\\u7ba1\\u3001\\u6ef4\\u7ba1\",\"procedures\":\"1. \\u51c6\\u5907\\u5b9e\\u9a8c\\u5668\\u6750\\u548c\\u8bd5\\u5242\\\\n2. \\u5728\\u8bd5\\u7ba1\\u4e2d\\u5206\\u522b\\u52a0\\u5165\\u7a00\\u76d0\\u9178\\u548c\\u7a00\\u6c22\\u6c27\\u5316\\u94a0\\u6eb6\\u6db2\\\\n3. \\u5206\\u522b\\u6ef4\\u5165\\u77f3\\u854a\\u8bd5\\u6db2\\uff0c\\u89c2\\u5bdf\\u989c\\u8272\\u53d8\\u5316\\\\n4. \\u91cd\\u590d\\u6b65\\u9aa4\\uff0c\\u4f7f\\u7528\\u915a\\u915e\\u8bd5\\u6db2\\\\n5. \\u8bb0\\u5f55\\u5b9e\\u9a8c\\u73b0\\u8c61\\\\n6. \\u5206\\u6790\\u5b9e\\u9a8c\\u7ed3\\u679c\",\"safety_notes\":\"1. \\u7a7f\\u6234\\u5b9e\\u9a8c\\u670d\\u548c\\u62a4\\u76ee\\u955c\\\\n2. \\u5c0f\\u5fc3\\u4f7f\\u7528\\u9178\\u78b1\\u6eb6\\u6db2\\uff0c\\u907f\\u514d\\u63a5\\u89e6\\u76ae\\u80a4\\\\n3. \\u5b9e\\u9a8c\\u540e\\u53ca\\u65f6\\u6e05\\u6d17\\u5668\\u6750\\\\n4. \\u4fdd\\u6301\\u5b9e\\u9a8c\\u5ba4\\u901a\\u98ce\",\"duration_minutes\":45,\"student_count\":30,\"difficulty_level\":\"medium\",\"status\":\"active\",\"curriculum_standard_id\":2,\"organization_id\":5,\"created_by\":3,\"updated_by\":null,\"extra_data\":{\"safety_level\":\"medium\",\"location\":\"chemistry_lab\",\"equipment_needed\":[\"test_tubes\",\"droppers\",\"indicators\",\"solutions\"]},\"created_at\":\"2025-07-02T06:51:30.000000Z\",\"updated_at\":\"2025-07-02T06:51:30.000000Z\",\"deleted_at\":null}', 'create', '初始创建', 'active', 3, '2025-07-01 22:51:30'),
+(3, 3, '1.0.0', '版本 1.0.0 - 创建', '{\"action\":\"\\u521b\\u5efa\\u5b9e\\u9a8c\\u76ee\\u5f55\"}', '{\"id\":3,\"name\":\"111\",\"code\":\"AA111\",\"subject\":\"science\",\"grade\":\"grade1\",\"textbook_version\":\"\\u6211\\u6211\",\"experiment_type\":\"demonstration\",\"description\":\"\\u5de5\",\"objectives\":\"\\u591a\",\"materials\":\"\\u591a\\u5c11 \\u4eba\",\"procedures\":\"\\u94dd\\u5408\\u91d1\",\"safety_notes\":\"\\u6b20\",\"duration_minutes\":22,\"student_count\":11,\"difficulty_level\":\"medium\",\"status\":\"draft\",\"curriculum_standard_id\":1,\"organization_id\":3,\"created_by\":1,\"updated_by\":null,\"extra_data\":null,\"created_at\":\"2025-07-04T13:31:10.000000Z\",\"updated_at\":\"2025-07-04T13:31:10.000000Z\",\"deleted_at\":null}', 'create', '新建实验目录', 'active', 1, '2025-07-04 05:31:10'),
+(4, 4, '1.0.0', '版本 1.0.0 - 创建', '{\"action\":\"\\u521b\\u5efa\\u5b9e\\u9a8c\\u76ee\\u5f55\"}', '{\"id\":4,\"name\":\"222\",\"code\":\"b2222\",\"subject\":\"science\",\"grade\":\"grade2\",\"textbook_version\":\"asd\",\"experiment_type\":\"demonstration\",\"description\":\"qqq\",\"objectives\":\"qqq\",\"materials\":\"qqq\",\"procedures\":\"qqq\",\"safety_notes\":\"qq\",\"duration_minutes\":22,\"student_count\":22,\"difficulty_level\":\"medium\",\"status\":\"draft\",\"curriculum_standard_id\":1,\"organization_id\":5,\"created_by\":3,\"updated_by\":null,\"extra_data\":null,\"created_at\":\"2025-07-04T13:34:17.000000Z\",\"updated_at\":\"2025-07-04T13:34:17.000000Z\",\"deleted_at\":null}', 'create', '新建实验目录', 'active', 3, '2025-07-04 05:34:17');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `curriculum_standards`
+--
+
+CREATE TABLE `curriculum_standards` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '课程标准名称',
+  `code` varchar(50) NOT NULL COMMENT '标准编码',
+  `version` varchar(50) NOT NULL COMMENT '版本号',
+  `subject` enum('physics','chemistry','biology','science') NOT NULL COMMENT '学科',
+  `grade` enum('grade1','grade2','grade3','grade4','grade5','grade6','grade7','grade8','grade9') NOT NULL COMMENT '年级',
+  `content` text DEFAULT NULL COMMENT '标准内容',
+  `learning_objectives` text DEFAULT NULL COMMENT '学习目标',
+  `key_concepts` text DEFAULT NULL COMMENT '核心概念',
+  `skills_requirements` text DEFAULT NULL COMMENT '技能要求',
+  `assessment_criteria` text DEFAULT NULL COMMENT '评价标准',
+  `effective_date` date DEFAULT NULL COMMENT '生效日期',
+  `expiry_date` date DEFAULT NULL COMMENT '失效日期',
+  `status` enum('active','inactive','draft','archived') NOT NULL DEFAULT 'draft' COMMENT '状态',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `curriculum_standards`
+--
+
+INSERT INTO `curriculum_standards` (`id`, `name`, `code`, `version`, `subject`, `grade`, `content`, `learning_objectives`, `key_concepts`, `skills_requirements`, `assessment_criteria`, `effective_date`, `expiry_date`, `status`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '小学科学课程标准（2022版）', 'CS_SCI_2022', '2022.1', 'science', 'grade3', '小学三年级科学课程标准，注重培养学生的科学思维和实践能力。', '1. 培养学生观察能力\\n2. 培养学生实验操作能力\\n3. 培养学生科学思维', '物质的性质、生命现象、地球与宇宙', '观察、记录、分析、总结', '实验操作规范性、观察记录完整性、分析总结准确性', '2022-09-01', NULL, 'active', 1, 1, NULL, NULL, '2025-07-01 22:51:29', '2025-07-01 22:51:29', NULL),
+(2, '初中化学课程标准（2022版）', 'CS_CHEM_2022', '2022.1', 'chemistry', 'grade9', '初中九年级化学课程标准，重点培养学生化学实验技能和安全意识。', '1. 掌握基本化学实验操作\\n2. 理解化学反应原理\\n3. 培养安全实验意识', '化学反应、物质组成、化学方程式', '实验操作、数据分析、安全防护', '实验安全性、操作准确性、结果分析能力', '2022-09-01', NULL, 'active', 1, 1, NULL, NULL, '2025-07-01 22:51:29', '2025-07-01 22:51:29', NULL);
 
 -- --------------------------------------------------------
 
@@ -128,6 +225,395 @@ CREATE TABLE `education_zones` (
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `equipment`
+--
+
+CREATE TABLE `equipment` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '设备名称',
+  `code` varchar(100) NOT NULL COMMENT '设备编码',
+  `model` varchar(100) DEFAULT NULL COMMENT '设备型号',
+  `brand` varchar(100) DEFAULT NULL COMMENT '品牌',
+  `description` text DEFAULT NULL COMMENT '设备描述',
+  `category_id` bigint(20) UNSIGNED NOT NULL COMMENT '设备分类ID',
+  `serial_number` varchar(100) DEFAULT NULL COMMENT '序列号',
+  `purchase_price` decimal(10,2) DEFAULT NULL COMMENT '采购价格',
+  `purchase_date` date DEFAULT NULL COMMENT '采购日期',
+  `supplier` varchar(200) DEFAULT NULL COMMENT '供应商',
+  `warranty_date` date DEFAULT NULL COMMENT '保修期至',
+  `status` enum('available','borrowed','maintenance','damaged','scrapped') NOT NULL DEFAULT 'available' COMMENT '设备状态',
+  `location` varchar(200) DEFAULT NULL COMMENT '存放位置',
+  `usage_notes` text DEFAULT NULL COMMENT '使用说明',
+  `maintenance_notes` text DEFAULT NULL COMMENT '维护记录',
+  `total_usage_count` int(11) NOT NULL DEFAULT 0 COMMENT '总使用次数',
+  `total_usage_hours` int(11) NOT NULL DEFAULT 0 COMMENT '总使用时长(小时)',
+  `last_maintenance_date` date DEFAULT NULL COMMENT '最后维护日期',
+  `next_maintenance_date` date DEFAULT NULL COMMENT '下次维护日期',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `equipment`
+--
+
+INSERT INTO `equipment` (`id`, `name`, `code`, `model`, `brand`, `description`, `category_id`, `serial_number`, `purchase_price`, `purchase_date`, `supplier`, `warranty_date`, `status`, `location`, `usage_notes`, `maintenance_notes`, `total_usage_count`, `total_usage_hours`, `last_maintenance_date`, `next_maintenance_date`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '数字显微镜', 'EQ_MICROSCOPE_001', 'DM-2000X', '奥林巴斯', '高倍数字显微镜，适用于生物观察', 2, 'OLY2024001', 15000.00, '2024-01-15', '科学仪器有限公司', '2027-01-15', 'available', '物理实验室A', '使用前请检查镜头清洁度', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(2, '电子天平', 'EQ_BALANCE_001', 'FA2004N', '上海精科', '精密电子天平，精度0.1mg', 4, 'SJ2024001', 8000.00, '2024-02-20', '实验设备公司', '2027-02-20', 'borrowed', '化学实验室B', '称量前需预热30分钟', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-04 05:02:56', NULL),
+(3, '力学实验台', 'EQ_MECHANICS_001', 'LX-2024', '教学设备厂', '多功能力学实验台', 3, 'JX2024001', 5000.00, '2024-03-10', '教育装备公司', '2026-03-10', 'available', '物理实验室C', '实验前检查各部件连接', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(4, '激光器', 'EQ_LASER_001', 'LD-650', '激光科技', '红光激光器，功率5mW', 2, 'LS2024001', 3000.00, '2024-04-05', '光电设备公司', '2026-04-05', 'maintenance', '物理实验室A', '使用时必须佩戴防护眼镜', '激光功率不稳定，需要校准', 0, 0, '2024-06-01', '2024-12-01', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(5, '示波器', 'EQ_OSCILLOSCOPE_001', 'DS1054Z', '普源精电', '数字示波器，4通道50MHz', 1, 'DS2024001', 3500.00, '2024-03-15', '仪器设备公司', '2027-03-15', 'available', '物理实验室B', '使用前需预热5分钟', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(6, '万用表', 'EQ_MULTIMETER_001', 'UT61E', '优利德', '数字万用表，真有效值', 1, 'UT2024001', 280.00, '2024-04-10', '电子仪器商城', '2026-04-10', 'available', '物理实验室A', '测量前检查档位设置', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(7, '光谱仪', 'EQ_SPECTROMETER_001', 'SP-2000', '海光仪器', '可见光分光光度计', 1, 'HG2024001', 12000.00, '2024-02-20', '光学仪器公司', '2027-02-20', 'maintenance', '物理实验室C', '需要专业人员操作', '光源需要更换', 0, 0, '2024-06-15', '2024-12-15', 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(8, '酸度计', 'EQ_PH_METER_001', 'PHS-3C', '雷磁', '台式酸度计，精度0.01pH', 4, 'LC2024001', 1800.00, '2024-03-25', '化学仪器公司', '2026-03-25', 'available', '化学实验室A', '使用前需校准', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(9, '离心机', 'EQ_CENTRIFUGE_001', 'TDL-5-A', '安亭科学', '台式低速离心机', 4, 'AT2024001', 4500.00, '2024-01-30', '实验设备公司', '2026-01-30', 'borrowed', '化学实验室B', '使用时注意平衡', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(10, '培养箱', 'EQ_INCUBATOR_001', 'DHP-9272', '一恒', '电热恒温培养箱', 5, 'YH2024001', 3200.00, '2024-02-15', '生物仪器公司', '2026-02-15', 'available', '生物实验室A', '温度设置不超过60℃', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(11, '超净工作台', 'EQ_CLEAN_BENCH_001', 'SW-CJ-1F', '苏净', '单人单面净化工作台', 5, 'SJ2024001', 5800.00, '2024-03-05', '净化设备公司', '2026-03-05', 'available', '生物实验室B', '使用前紫外消毒30分钟', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(12, '投影仪', 'EQ_PROJECTOR_001', 'EB-X41', '爱普生', '教学投影仪，3600流明', 6, 'EP2024001', 2800.00, '2024-04-20', '教学设备公司', '2026-04-20', 'available', '多媒体教室', '使用后及时关闭', NULL, 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(13, '打印机', 'EQ_PRINTER_001', 'LaserJet Pro M404n', '惠普', '黑白激光打印机', 6, 'HP2024001', 1200.00, '2024-05-10', '办公设备公司', '2025-05-10', 'damaged', '办公室', '定期更换硒鼓', '进纸器故障，需要维修', 0, 0, NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `equipment_borrowings`
+--
+
+CREATE TABLE `equipment_borrowings` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `borrowing_code` varchar(50) NOT NULL COMMENT '借用编号',
+  `equipment_id` bigint(20) UNSIGNED NOT NULL COMMENT '设备ID',
+  `borrower_id` bigint(20) UNSIGNED NOT NULL COMMENT '借用人ID',
+  `approver_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '审批人ID',
+  `purpose` text NOT NULL COMMENT '借用目的',
+  `planned_start_time` datetime NOT NULL COMMENT '计划开始时间',
+  `planned_end_time` datetime NOT NULL COMMENT '计划结束时间',
+  `actual_start_time` datetime DEFAULT NULL COMMENT '实际开始时间',
+  `actual_end_time` datetime DEFAULT NULL COMMENT '实际结束时间',
+  `status` enum('pending','approved','rejected','borrowed','returned','overdue','cancelled') NOT NULL DEFAULT 'pending' COMMENT '借用状态',
+  `approval_notes` text DEFAULT NULL COMMENT '审批备注',
+  `borrowing_notes` text DEFAULT NULL COMMENT '借用备注',
+  `return_notes` text DEFAULT NULL COMMENT '归还备注',
+  `equipment_condition_before` enum('good','normal','damaged') DEFAULT NULL COMMENT '借用前设备状态',
+  `equipment_condition_after` enum('good','normal','damaged') DEFAULT NULL COMMENT '归还后设备状态',
+  `approved_at` datetime DEFAULT NULL COMMENT '审批时间',
+  `borrowed_at` datetime DEFAULT NULL COMMENT '借用时间',
+  `returned_at` datetime DEFAULT NULL COMMENT '归还时间',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `equipment_borrowings`
+--
+
+INSERT INTO `equipment_borrowings` (`id`, `borrowing_code`, `equipment_id`, `borrower_id`, `approver_id`, `purpose`, `planned_start_time`, `planned_end_time`, `actual_start_time`, `actual_end_time`, `status`, `approval_notes`, `borrowing_notes`, `return_notes`, `equipment_condition_before`, `equipment_condition_after`, `approved_at`, `borrowed_at`, `returned_at`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'BOR_20250703025020_1', 1, 6, 1, '物理光学实验教学', '2025-07-04 02:50:20', '2025-07-06 02:50:20', NULL, NULL, 'approved', NULL, NULL, NULL, NULL, NULL, '2025-07-04 13:02:30', NULL, NULL, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-04 05:02:30', NULL),
+(2, 'BOR_20250703025020_2', 2, 6, 1, '化学分析实验', '2025-07-01 02:50:20', '2025-07-04 02:50:20', '2025-07-04 13:02:56', NULL, 'borrowed', '实验需要，批准借用', NULL, NULL, 'good', NULL, '2025-07-02 02:50:20', '2025-07-04 13:02:56', NULL, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-04 05:02:56', NULL),
+(3, 'BOR_20250703025020_3', 3, 6, 1, '学生实验课程', '2025-06-28 02:50:20', '2025-06-30 02:50:20', NULL, NULL, 'borrowed', '同意借用', '设备状态良好', NULL, 'good', NULL, '2025-06-29 02:50:20', '2025-06-29 02:50:20', NULL, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(4, 'BOR_20250703025020_4', 5, 6, 1, '教师演示实验', '2025-06-23 02:50:20', '2025-06-25 02:50:20', '2025-06-24 02:50:20', '2025-06-26 02:50:20', 'returned', '批准借用', '设备正常', '使用正常，已归还', 'good', 'good', '2025-06-24 02:50:20', '2025-06-24 02:50:20', '2025-06-26 02:50:20', 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `equipment_categories`
+--
+
+CREATE TABLE `equipment_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL COMMENT '分类名称',
+  `code` varchar(50) NOT NULL COMMENT '分类编码',
+  `description` text DEFAULT NULL COMMENT '分类描述',
+  `parent_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '父级分类ID',
+  `subject` varchar(50) DEFAULT NULL COMMENT '适用学科',
+  `grade_range` varchar(100) DEFAULT NULL COMMENT '适用年级范围',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active' COMMENT '状态',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `equipment_categories`
+--
+
+INSERT INTO `equipment_categories` (`id`, `name`, `code`, `description`, `parent_id`, `subject`, `grade_range`, `sort_order`, `status`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '物理实验设备', 'PHYS_EQ', '物理学科实验设备', NULL, 'physics', 'grade7-12', 1, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(2, '光学设备', 'PHYS_OPTICS', '光学实验设备', 1, 'physics', 'grade7-12', 1, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(3, '力学设备', 'PHYS_MECHANICS', '力学实验设备', 1, 'physics', 'grade7-12', 2, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(4, '化学实验设备', 'CHEM_EQ', '化学学科实验设备', NULL, 'chemistry', 'grade7-12', 2, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(5, '生物实验设备', 'BIO_EQ', '生物学科实验设备', NULL, 'biology', 'grade7-12', 3, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(6, '通用实验设备', 'GEN_EQ', '通用实验设备', NULL, 'general', 'all', 4, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `experiment_catalogs`
+--
+
+CREATE TABLE `experiment_catalogs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '实验名称',
+  `code` varchar(50) NOT NULL COMMENT '实验编码',
+  `subject` enum('physics','chemistry','biology','science') NOT NULL COMMENT '学科',
+  `grade` enum('grade1','grade2','grade3','grade4','grade5','grade6','grade7','grade8','grade9') NOT NULL COMMENT '年级',
+  `textbook_version` varchar(100) NOT NULL COMMENT '教材版本',
+  `experiment_type` enum('demonstration','group','individual','inquiry') NOT NULL COMMENT '实验类型',
+  `description` text DEFAULT NULL COMMENT '实验描述',
+  `objectives` text DEFAULT NULL COMMENT '实验目标',
+  `materials` text DEFAULT NULL COMMENT '实验材料',
+  `procedures` text DEFAULT NULL COMMENT '实验步骤',
+  `safety_notes` text DEFAULT NULL COMMENT '安全注意事项',
+  `duration_minutes` int(11) DEFAULT NULL COMMENT '实验时长(分钟)',
+  `student_count` int(11) DEFAULT NULL COMMENT '适合学生数量',
+  `difficulty_level` enum('easy','medium','hard') NOT NULL DEFAULT 'medium' COMMENT '难度等级',
+  `status` enum('active','inactive','draft') NOT NULL DEFAULT 'draft' COMMENT '状态',
+  `curriculum_standard_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '课程标准ID',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `experiment_catalogs`
+--
+
+INSERT INTO `experiment_catalogs` (`id`, `name`, `code`, `subject`, `grade`, `textbook_version`, `experiment_type`, `description`, `objectives`, `materials`, `procedures`, `safety_notes`, `duration_minutes`, `student_count`, `difficulty_level`, `status`, `curriculum_standard_id`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '观察植物的根、茎、叶', 'EXP_SCI_001', 'science', 'grade3', '人教版2022', 'group', '通过观察不同植物的根、茎、叶，了解植物的基本结构特征。', '1. 认识植物的基本结构\\n2. 学会使用放大镜观察\\n3. 培养观察记录能力', '放大镜、各种植物标本、记录表、彩色铅笔', '1. 准备观察材料\\n2. 使用放大镜仔细观察植物的根、茎、叶\\n3. 记录观察结果\\n4. 对比不同植物的特征\\n5. 总结植物结构的共同点和不同点', '1. 小心使用放大镜，避免阳光直射眼睛\\n2. 轻拿轻放植物标本\\n3. 保持实验台面整洁', 40, 4, 'easy', 'active', 1, 5, 3, NULL, '{\"season\":\"spring\",\"location\":\"classroom\",\"equipment_needed\":[\"magnifier\",\"specimens\",\"worksheets\"]}', '2025-07-01 22:51:30', '2025-07-01 22:51:30', NULL),
+(2, '酸碱指示剂的变色实验', 'EXP_CHEM_001', 'chemistry', 'grade9', '人教版2022', 'demonstration', '通过酸碱指示剂在不同溶液中的变色现象，认识酸碱性质。', '1. 认识常见的酸碱指示剂\\n2. 观察指示剂的变色现象\\n3. 理解酸碱的概念', '石蕊试液、酚酞试液、稀盐酸、稀氢氧化钠溶液、试管、滴管', '1. 准备实验器材和试剂\\n2. 在试管中分别加入稀盐酸和稀氢氧化钠溶液\\n3. 分别滴入石蕊试液，观察颜色变化\\n4. 重复步骤，使用酚酞试液\\n5. 记录实验现象\\n6. 分析实验结果', '1. 穿戴实验服和护目镜\\n2. 小心使用酸碱溶液，避免接触皮肤\\n3. 实验后及时清洗器材\\n4. 保持实验室通风', 45, 30, 'medium', 'active', 2, 5, 3, NULL, '{\"safety_level\":\"medium\",\"location\":\"chemistry_lab\",\"equipment_needed\":[\"test_tubes\",\"droppers\",\"indicators\",\"solutions\"]}', '2025-07-01 22:51:30', '2025-07-01 22:51:30', NULL),
+(3, '111', 'AA111', 'science', 'grade1', '我我', 'demonstration', '工', '多', '多少 人', '铝合金', '欠', 22, 11, 'medium', 'draft', 1, 3, 1, NULL, NULL, '2025-07-04 05:31:10', '2025-07-04 05:31:10', NULL),
+(4, '222', 'b2222', 'science', 'grade2', 'asd', 'demonstration', 'qqq', 'qqq', 'qqq', 'qqq', 'qq', 22, 22, 'medium', 'draft', 1, 5, 3, NULL, NULL, '2025-07-04 05:34:17', '2025-07-04 05:34:17', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `experiment_photos`
+--
+
+CREATE TABLE `experiment_photos` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `experiment_record_id` bigint(20) UNSIGNED NOT NULL COMMENT '实验记录ID',
+  `photo_type` enum('preparation','process','result','equipment','safety') NOT NULL COMMENT '照片类型',
+  `file_path` varchar(500) NOT NULL COMMENT '文件路径',
+  `file_name` varchar(255) NOT NULL COMMENT '文件名',
+  `original_name` varchar(255) NOT NULL COMMENT '原始文件名',
+  `file_size` int(11) NOT NULL COMMENT '文件大小(字节)',
+  `mime_type` varchar(100) NOT NULL COMMENT 'MIME类型',
+  `width` int(11) DEFAULT NULL COMMENT '图片宽度',
+  `height` int(11) DEFAULT NULL COMMENT '图片高度',
+  `upload_method` enum('mobile','web') NOT NULL DEFAULT 'web' COMMENT '上传方式',
+  `location_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '位置信息(经纬度)' CHECK (json_valid(`location_info`)),
+  `timestamp_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '时间戳信息' CHECK (json_valid(`timestamp_info`)),
+  `watermark_applied` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否已添加水印',
+  `ai_analysis_result` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'AI分析结果' CHECK (json_valid(`ai_analysis_result`)),
+  `compliance_status` enum('pending','compliant','non_compliant','needs_review') NOT NULL DEFAULT 'pending' COMMENT '合规状态',
+  `description` text DEFAULT NULL COMMENT '照片描述',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `is_required` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否必需照片',
+  `hash` varchar(64) DEFAULT NULL COMMENT '文件哈希值',
+  `exif_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'EXIF数据' CHECK (json_valid(`exif_data`)),
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `experiment_photos`
+--
+
+INSERT INTO `experiment_photos` (`id`, `experiment_record_id`, `photo_type`, `file_path`, `file_name`, `original_name`, `file_size`, `mime_type`, `width`, `height`, `upload_method`, `location_info`, `timestamp_info`, `watermark_applied`, `ai_analysis_result`, `compliance_status`, `description`, `sort_order`, `is_required`, `hash`, `exif_data`, `organization_id`, `created_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, 'preparation', 'experiment_photos/1/preparation/sample_preparation.jpg', 'sample_preparation.jpg', '实验preparation照片.jpg', 776333, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'compliant', '实验前的器材准备情况，所有设备摆放整齐', 0, 0, 'da7fe8079fd6fab77accd1bbe74c523bfe2d781da0b73a624041c219dc1c2169', NULL, 5, 6, NULL, '2025-07-03 02:35:10', '2025-07-03 02:35:10', NULL),
+(2, 1, 'process', 'experiment_photos/1/process/sample_process.jpg', 'sample_process.jpg', '实验process照片.jpg', 1445910, 'image/jpeg', 1920, 1080, 'mobile', NULL, NULL, 1, NULL, 'compliant', '学生正在进行实验操作的过程记录', 0, 0, 'ca3950f0f588fed7fac3106c7f5793145126783223868d1644d68726cbd580a0', NULL, 5, 6, NULL, '2025-07-03 02:35:10', '2025-07-03 02:35:10', NULL),
+(3, 1, 'result', 'experiment_photos/1/result/sample_result.jpg', 'sample_result.jpg', '实验result照片.jpg', 1153269, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'compliant', '实验结果展示，可以清楚看到实验现象', 0, 0, '269caf873459d6001102d463eda9d00cbcc0bbdf29fa2a97d4fa2f3f358b9ad3', NULL, 5, 6, NULL, '2025-07-03 02:35:10', '2025-07-03 02:35:10', NULL),
+(4, 2, 'preparation', 'experiment_photos/2/preparation/sample_preparation.jpg', 'sample_preparation.jpg', '实验preparation照片.jpg', 575029, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, '{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.378683Z\"}', 'compliant', '实验前的器材准备情况，所有设备摆放整齐', 0, 0, 'acacdec04c5ce5b8ae78db590c9b76e97dc34c2ba81ed4b623f5f78b3c8ddcf5', NULL, 6, 6, NULL, '2025-07-03 02:35:11', '2025-07-03 17:02:01', NULL),
+(5, 2, 'process', 'experiment_photos/2/process/sample_process.jpg', 'sample_process.jpg', '实验process照片.jpg', 523300, 'image/jpeg', 1920, 1080, 'mobile', NULL, NULL, 1, '{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.381811Z\"}', 'compliant', '学生正在进行实验操作的过程记录', 0, 0, 'b0eceda3086b9c65c46e33a4b83f11f48c3d92557dc3312f5a93903e921e8e1d', NULL, 6, 6, NULL, '2025-07-03 02:35:11', '2025-07-03 17:02:01', NULL),
+(6, 2, 'result', 'experiment_photos/2/result/sample_result.jpg', 'sample_result.jpg', '实验result照片.jpg', 1713298, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, '{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.382921Z\"}', 'compliant', '实验结果展示，可以清楚看到实验现象', 0, 0, '0b6f0e24105c536124e7f8faddb588b31d0ea4622df72779ce3636c14dddcb8b', NULL, 6, 6, NULL, '2025-07-03 02:35:11', '2025-07-03 17:02:01', NULL),
+(7, 3, 'preparation', 'experiment_photos/3/preparation/sample_preparation.jpg', 'sample_preparation.jpg', '实验preparation照片.jpg', 1955115, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'compliant', '实验前的器材准备情况，所有设备摆放整齐', 0, 0, 'bb0575f05d6279bdb8c59762a8a96eee4522669c76b301ea09d6de79becd09dc', NULL, 5, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(8, 3, 'process', 'experiment_photos/3/process/sample_process.jpg', 'sample_process.jpg', '实验process照片.jpg', 1005793, 'image/jpeg', 1920, 1080, 'mobile', NULL, NULL, 1, NULL, 'compliant', '学生正在进行实验操作的过程记录', 0, 0, 'eea54ff60a43e627d060393a8847572b0fb48932aa075b56f988aa14e20cb6fc', NULL, 5, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(9, 3, 'result', 'experiment_photos/3/result/sample_result.jpg', 'sample_result.jpg', '实验result照片.jpg', 1272022, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'compliant', '实验结果展示，可以清楚看到实验现象', 0, 0, '479369025dfa39e6072ff98da391c8aa682d66267677af9ff55ed66cc821ba72', NULL, 5, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(10, 4, 'preparation', 'experiment_photos/4/preparation/sample_preparation.jpg', 'sample_preparation.jpg', '实验preparation照片.jpg', 1418746, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'pending', '实验前的器材准备情况，所有设备摆放整齐', 0, 0, 'f874d64468a531d7037ed25107812d360df39623d0950293682433c52d50ae43', NULL, 6, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(11, 4, 'process', 'experiment_photos/4/process/sample_process.jpg', 'sample_process.jpg', '实验process照片.jpg', 708021, 'image/jpeg', 1920, 1080, 'mobile', NULL, NULL, 1, NULL, 'pending', '学生正在进行实验操作的过程记录', 0, 0, 'e26d545e125af9e8dab44859deba44d43a4f039fcfc55497e277980511e5a666', NULL, 6, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(12, 4, 'result', 'experiment_photos/4/result/sample_result.jpg', 'sample_result.jpg', '实验result照片.jpg', 687058, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'pending', '实验结果展示，可以清楚看到实验现象', 0, 0, '36860d82bffa7189607d5a94d2e9dd0b0e276579265ed3a1222dc8b7dab8e8fd', NULL, 6, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(13, 5, 'preparation', 'experiment_photos/5/preparation/sample_preparation.jpg', 'sample_preparation.jpg', '实验preparation照片.jpg', 1904369, 'image/jpeg', 1920, 1080, 'web', NULL, NULL, 1, NULL, 'pending', '实验前的器材准备情况，所有设备摆放整齐', 0, 0, '0524350a03f53db0efb7060b669a57cf0c954d07834adf227a543392ae7540ce', NULL, 5, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(14, 5, 'process', 'experiment_photos/5/process/sample_process.jpg', 'sample_process.jpg', '实验process照片.jpg', 1223115, 'image/jpeg', 1920, 1080, 'mobile', NULL, NULL, 1, NULL, 'pending', '学生正在进行实验操作的过程记录', 0, 0, '6ac681100ba322b342f7f870d8cddeadbd50b5640b91f7d6d98185a32658e8d6', NULL, 5, 6, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `experiment_plans`
+--
+
+CREATE TABLE `experiment_plans` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '计划名称',
+  `code` varchar(50) NOT NULL COMMENT '计划编码',
+  `experiment_catalog_id` bigint(20) UNSIGNED NOT NULL COMMENT '实验目录ID',
+  `curriculum_standard_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '课程标准ID',
+  `teacher_id` bigint(20) UNSIGNED NOT NULL COMMENT '教师ID',
+  `class_name` varchar(100) DEFAULT NULL COMMENT '班级名称',
+  `student_count` int(11) DEFAULT NULL COMMENT '学生人数',
+  `planned_date` date DEFAULT NULL COMMENT '计划执行日期',
+  `planned_duration` int(11) DEFAULT NULL COMMENT '计划时长(分钟)',
+  `status` enum('draft','pending','approved','rejected','executing','completed','cancelled') NOT NULL DEFAULT 'draft' COMMENT '状态',
+  `description` text DEFAULT NULL COMMENT '计划描述',
+  `objectives` text DEFAULT NULL COMMENT '教学目标',
+  `key_points` text DEFAULT NULL COMMENT '重点难点',
+  `safety_requirements` text DEFAULT NULL COMMENT '安全要求',
+  `equipment_requirements` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '设备需求' CHECK (json_valid(`equipment_requirements`)),
+  `material_requirements` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '材料需求' CHECK (json_valid(`material_requirements`)),
+  `approval_notes` text DEFAULT NULL COMMENT '审批意见',
+  `approved_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '审批人ID',
+  `approved_at` timestamp NULL DEFAULT NULL COMMENT '审批时间',
+  `rejection_reason` text DEFAULT NULL COMMENT '拒绝原因',
+  `revision_count` int(11) NOT NULL DEFAULT 0 COMMENT '修改次数',
+  `priority` enum('low','medium','high') NOT NULL DEFAULT 'medium' COMMENT '优先级',
+  `is_public` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否公开',
+  `schedule_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '排课信息' CHECK (json_valid(`schedule_info`)),
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `experiment_plans`
+--
+
+INSERT INTO `experiment_plans` (`id`, `name`, `code`, `experiment_catalog_id`, `curriculum_standard_id`, `teacher_id`, `class_name`, `student_count`, `planned_date`, `planned_duration`, `status`, `description`, `objectives`, `key_points`, `safety_requirements`, `equipment_requirements`, `material_requirements`, `approval_notes`, `approved_by`, `approved_at`, `rejection_reason`, `revision_count`, `priority`, `is_public`, `schedule_info`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '观察植物根茎叶实验计划', 'EP20250703001', 1, 1, 6, '三年级一班', 35, '2025-07-10', 45, 'approved', '通过观察植物的根、茎、叶，让学生了解植物的基本结构和功能。', '1. 认识植物的基本结构\\n2. 了解根茎叶的功能\\n3. 培养观察能力', '重点：植物各部分的特征\\n难点：理解各部分的功能', '1. 小心使用放大镜\\n2. 不要随意采摘植物\\n3. 注意保持实验台整洁', '[{\"name\":\"\\u653e\\u5927\\u955c\",\"quantity\":10,\"specification\":\"5\\u500d\\u653e\\u5927\"},{\"name\":\"\\u954a\\u5b50\",\"quantity\":10,\"specification\":\"\\u4e0d\\u9508\\u94a2\\u6750\\u8d28\"},{\"name\":\"\\u57f9\\u517b\\u76bf\",\"quantity\":10,\"specification\":\"\\u76f4\\u5f8410cm\"}]', '[{\"name\":\"\\u65b0\\u9c9c\\u690d\\u7269\\u6837\\u672c\",\"quantity\":10,\"unit\":\"\\u4efd\",\"specification\":\"\\u5305\\u542b\\u6839\\u830e\\u53f6\\u5b8c\\u6574\\u7ed3\\u6784\"},{\"name\":\"\\u84b8\\u998f\\u6c34\",\"quantity\":500,\"unit\":\"ml\",\"specification\":\"\\u5b9e\\u9a8c\\u7528\\u7eaf\\u51c0\\u6c34\"}]', '计划详细，符合教学要求，同意执行。', 6, '2025-07-03 01:59:09', NULL, 0, 'medium', 1, NULL, 5, 6, NULL, NULL, '2025-07-03 01:59:09', '2025-07-03 01:59:09', NULL),
+(2, '酸碱指示剂变色实验计划', 'EP20250703002', 2, 2, 6, '五年级二班', 32, '2025-07-15', 40, 'pending', '通过酸碱指示剂的变色反应，让学生了解酸碱性质。', '1. 认识酸碱指示剂\\n2. 观察指示剂变色现象\\n3. 理解酸碱的基本概念', '重点：指示剂的变色规律\\n难点：酸碱概念的理解', '1. 穿戴防护用品\\n2. 小心使用化学试剂\\n3. 避免试剂接触皮肤\\n4. 实验后及时清洗', '[{\"name\":\"\\u8bd5\\u7ba1\",\"quantity\":20,\"specification\":\"15ml\\u5bb9\\u91cf\"},{\"name\":\"\\u8bd5\\u7ba1\\u67b6\",\"quantity\":5,\"specification\":\"\\u6728\\u8d28\\u6216\\u5851\\u6599\"},{\"name\":\"\\u6ef4\\u7ba1\",\"quantity\":10,\"specification\":\"\\u5851\\u6599\\u6750\\u8d28\"}]', '[{\"name\":\"\\u77f3\\u854a\\u8bd5\\u6db2\",\"quantity\":50,\"unit\":\"ml\",\"specification\":\"0.1%\\u6d53\\u5ea6\"},{\"name\":\"\\u7a00\\u76d0\\u9178\",\"quantity\":100,\"unit\":\"ml\",\"specification\":\"0.1mol\\/L\"},{\"name\":\"\\u6c22\\u6c27\\u5316\\u94a0\\u6eb6\\u6db2\",\"quantity\":100,\"unit\":\"ml\",\"specification\":\"0.1mol\\/L\"}]', NULL, NULL, NULL, NULL, 0, 'high', 0, NULL, 6, 6, NULL, NULL, '2025-07-03 01:59:09', '2025-07-03 01:59:09', NULL),
+(3, '简单电路制作实验计划', 'EP20250703003', 1, 1, 6, '四年级三班', 28, '2025-07-20', 50, 'draft', '让学生动手制作简单电路，理解电路的基本原理。', '1. 了解电路的基本组成\\n2. 学会制作简单电路\\n3. 培养动手能力', '重点：电路连接方法\\n难点：理解电流路径', '1. 使用低压电源\\n2. 注意导线连接\\n3. 避免短路', '[{\"name\":\"\\u7535\\u6c60\\u76d2\",\"quantity\":10,\"specification\":\"2\\u82825\\u53f7\\u7535\\u6c60\"},{\"name\":\"\\u5c0f\\u706f\\u6ce1\",\"quantity\":20,\"specification\":\"2.5V\"},{\"name\":\"\\u5bfc\\u7ebf\",\"quantity\":30,\"specification\":\"\\u5e26\\u9cc4\\u9c7c\\u5939\"},{\"name\":\"\\u4e2d\\u53e3\",\"quantity\":1,\"specification\":\"7\"}]', '[{\"name\":\"5\\u53f7\\u7535\\u6c60\",\"quantity\":20,\"unit\":\"\\u8282\",\"specification\":\"1.5V\\u5e72\\u7535\\u6c60\"},{\"name\":\"\\u5f00\\u5173\",\"quantity\":10,\"unit\":\"\\u4e2a\",\"specification\":\"\\u6309\\u94ae\\u5f0f\\u5f00\\u5173\"}]', NULL, NULL, NULL, NULL, 0, 'low', 1, NULL, 5, 6, 1, NULL, '2025-07-03 01:59:09', '2025-07-04 05:06:12', NULL),
+(4, '水的三态变化观察实验', 'EP20250703004', 1, NULL, 6, '二年级一班', 30, '2025-07-25', 35, 'rejected', '观察水在不同温度下的状态变化。', '1. 认识水的三种状态\\n2. 观察状态变化过程\\n3. 理解温度对物质状态的影响', '重点：三态变化现象\\n难点：理解变化原因', '1. 小心热水烫伤\\n2. 注意用电安全\\n3. 保持实验环境整洁', '[{\"name\":\"\\u70e7\\u676f\",\"quantity\":5,\"specification\":\"250ml\"},{\"name\":\"\\u6e29\\u5ea6\\u8ba1\",\"quantity\":5,\"specification\":\"0-100\\u2103\"},{\"name\":\"\\u7535\\u70ed\\u5668\",\"quantity\":2,\"specification\":\"\\u5b9e\\u9a8c\\u5ba4\\u4e13\\u7528\"}]', '[{\"name\":\"\\u84b8\\u998f\\u6c34\",\"quantity\":1000,\"unit\":\"ml\",\"specification\":\"\\u7eaf\\u51c0\\u6c34\"},{\"name\":\"\\u51b0\\u5757\",\"quantity\":500,\"unit\":\"g\",\"specification\":\"\\u5b9e\\u9a8c\\u7528\\u51b0\"}]', NULL, 6, '2025-07-03 01:59:09', '实验设计存在安全隐患，请修改后重新提交。', 0, 'medium', 0, NULL, 5, 6, NULL, NULL, '2025-07-03 01:59:09', '2025-07-03 01:59:09', NULL),
+(6, '观察种子', 'EP20250704001', 1, 1, 3, '二年级3', 22, '2025-07-05', 22, 'approved', '观察根茎叶三年级科学', '观察根茎叶三年级科学', '观察根茎叶三年级科学', '观察根茎叶三年级科学', '[{\"name\":\"\\u89c2\\u5bdf\\u6839\\u830e\\u53f6\\u4e09\\u5e74\\u7ea7\\u79d1\\u5b66\",\"quantity\":1,\"specification\":\"\\u89c2\\u5bdf\\u6839\\u830e\\u53f6\\u4e09\\u5e74\\u7ea7\\u79d1\\u5b66\"},{\"name\":\"\\u8981\",\"quantity\":1,\"specification\":\"\\u8981\"}]', '[{\"name\":\"\\u89c2\\u5bdf\\u6839\\u830e\\u53f6\\u4e09\\u5e74\\u7ea7\\u79d1\\u5b661\",\"quantity\":1,\"unit\":\"ml\",\"specification\":\"ddd\"}]', NULL, 3, '2025-07-04 05:43:08', NULL, 1, 'medium', 1, NULL, 5, 3, NULL, NULL, '2025-07-04 05:41:37', '2025-07-04 05:43:08', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `experiment_records`
+--
+
+CREATE TABLE `experiment_records` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `experiment_plan_id` bigint(20) UNSIGNED NOT NULL COMMENT '实验计划ID',
+  `execution_date` date NOT NULL COMMENT '执行日期',
+  `start_time` time DEFAULT NULL COMMENT '开始时间',
+  `end_time` time DEFAULT NULL COMMENT '结束时间',
+  `actual_duration` int(11) DEFAULT NULL COMMENT '实际时长(分钟)',
+  `actual_student_count` int(11) DEFAULT NULL COMMENT '实际参与学生数',
+  `completion_status` enum('not_started','in_progress','partial','completed','cancelled') NOT NULL DEFAULT 'not_started' COMMENT '完成状态',
+  `execution_notes` text DEFAULT NULL COMMENT '执行说明',
+  `problems_encountered` text DEFAULT NULL COMMENT '遇到的问题',
+  `solutions_applied` text DEFAULT NULL COMMENT '解决方案',
+  `teaching_reflection` text DEFAULT NULL COMMENT '教学反思',
+  `student_feedback` text DEFAULT NULL COMMENT '学生反馈',
+  `equipment_used` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '使用的设备' CHECK (json_valid(`equipment_used`)),
+  `materials_consumed` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '消耗的材料' CHECK (json_valid(`materials_consumed`)),
+  `data_records` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '实验数据记录' CHECK (json_valid(`data_records`)),
+  `safety_incidents` text DEFAULT NULL COMMENT '安全事件记录',
+  `status` enum('draft','submitted','under_review','approved','rejected','revision_required') NOT NULL DEFAULT 'draft' COMMENT '审核状态',
+  `review_notes` text DEFAULT NULL COMMENT '审核意见',
+  `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '审核人ID',
+  `reviewed_at` timestamp NULL DEFAULT NULL COMMENT '审核时间',
+  `photo_count` int(11) NOT NULL DEFAULT 0 COMMENT '照片数量',
+  `equipment_confirmed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '器材准备已确认',
+  `equipment_confirmed_at` timestamp NULL DEFAULT NULL COMMENT '器材确认时间',
+  `validation_results` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '验证结果' CHECK (json_valid(`validation_results`)),
+  `completion_percentage` decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT '完成百分比',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `experiment_records`
+--
+
+INSERT INTO `experiment_records` (`id`, `experiment_plan_id`, `execution_date`, `start_time`, `end_time`, `actual_duration`, `actual_student_count`, `completion_status`, `execution_notes`, `problems_encountered`, `solutions_applied`, `teaching_reflection`, `student_feedback`, `equipment_used`, `materials_consumed`, `data_records`, `safety_incidents`, `status`, `review_notes`, `reviewed_by`, `reviewed_at`, `photo_count`, `equipment_confirmed`, `equipment_confirmed_at`, `validation_results`, `completion_percentage`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, '2025-07-08', '09:00:00', '09:45:00', 45, 34, 'completed', '实验顺利进行，学生积极参与观察植物根茎叶的结构。通过放大镜观察，学生能够清楚地看到植物各部分的特征。', '部分学生在使用放大镜时需要指导，有2个放大镜出现轻微划痕。', '安排学习小组互助，更换了有划痕的放大镜。', '学生对植物结构的理解比预期要好，下次可以增加更多的观察内容。实验时间安排合理。', '学生反映实验很有趣，希望能观察更多不同种类的植物。', '[{\"name\":\"\\u653e\\u5927\\u955c\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"2\\u4e2a\\u6709\\u8f7b\\u5fae\\u5212\\u75d5\\u5df2\\u66f4\\u6362\"},{\"name\":\"\\u954a\\u5b50\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u4f7f\\u7528\\u6b63\\u5e38\"},{\"name\":\"\\u57f9\\u517b\\u76bf\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u6e05\\u6d01\\u5b8c\\u597d\"}]', '[{\"name\":\"\\u65b0\\u9c9c\\u690d\\u7269\\u6837\\u672c\",\"quantity\":10,\"unit\":\"\\u4efd\",\"notes\":\"\\u5305\\u542b\\u6839\\u830e\\u53f6\\u5b8c\\u6574\\u7ed3\\u6784\"},{\"name\":\"\\u84b8\\u998f\\u6c34\",\"quantity\":200,\"unit\":\"ml\",\"notes\":\"\\u7528\\u4e8e\\u6e05\\u6d01\\u548c\\u4fdd\\u6e7f\"}]', '[{\"parameter\":\"\\u6839\\u957f\\u5ea6\",\"value\":\"8-12\",\"unit\":\"cm\",\"notes\":\"\\u5e73\\u5747\\u503c\"},{\"parameter\":\"\\u53f6\\u7247\\u6570\\u91cf\",\"value\":\"6-8\",\"unit\":\"\\u7247\",\"notes\":\"\\u6bcf\\u682a\\u5e73\\u5747\"},{\"parameter\":\"\\u830e\\u76f4\\u5f84\",\"value\":\"2-3\",\"unit\":\"mm\",\"notes\":\"\\u6d4b\\u91cf\\u503c\"}]', NULL, 'approved', '记录详细完整，实验执行效果良好，同意通过。', 6, '2025-07-03 02:35:10', 3, 1, '2025-07-02 02:35:10', NULL, 100.00, 5, 6, NULL, NULL, '2025-07-03 02:35:10', '2025-07-03 02:35:10', NULL),
+(2, 2, '2025-07-12', '14:00:00', '14:35:00', 35, 30, 'partial', '酸碱指示剂实验进行了一半，由于时间不够，部分实验内容延后进行。', '实验准备时间过长，导致实际实验时间不足。部分试剂浓度需要调整。', '下次课继续完成剩余实验内容，提前准备试剂。', '需要更好地控制实验节奏，提前做好充分准备。', '学生对变色现象很感兴趣，希望能看到更多的变色实验。', '[{\"name\":\"\\u8bd5\\u7ba1\",\"quantity\":15,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u4f7f\\u7528\\u6b63\\u5e38\"},{\"name\":\"\\u8bd5\\u7ba1\\u67b6\",\"quantity\":5,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u7a33\\u5b9a\\u6027\\u597d\"},{\"name\":\"\\u6ef4\\u7ba1\",\"quantity\":8,\"condition\":\"\\u826f\\u597d\",\"notes\":\"2\\u4e2a\\u9700\\u8981\\u6e05\\u6d01\"}]', '[{\"name\":\"\\u77f3\\u854a\\u8bd5\\u6db2\",\"quantity\":30,\"unit\":\"ml\",\"notes\":\"0.1%\\u6d53\\u5ea6\"},{\"name\":\"\\u7a00\\u76d0\\u9178\",\"quantity\":50,\"unit\":\"ml\",\"notes\":\"0.1mol\\/L\"},{\"name\":\"\\u6c22\\u6c27\\u5316\\u94a0\\u6eb6\\u6db2\",\"quantity\":50,\"unit\":\"ml\",\"notes\":\"0.1mol\\/L\"}]', '[{\"parameter\":\"\\u9178\\u6027\\u6eb6\\u6db2\\u989c\\u8272\",\"value\":\"\\u7ea2\\u8272\",\"unit\":\"\",\"notes\":\"\\u77f3\\u854a\\u8bd5\\u6db2\\u53d8\\u8272\"},{\"parameter\":\"\\u78b1\\u6027\\u6eb6\\u6db2\\u989c\\u8272\",\"value\":\"\\u84dd\\u8272\",\"unit\":\"\",\"notes\":\"\\u77f3\\u854a\\u8bd5\\u6db2\\u53d8\\u8272\"},{\"parameter\":\"\\u53d8\\u8272\\u65f6\\u95f4\",\"value\":\"2-3\",\"unit\":\"\\u79d2\",\"notes\":\"\\u53cd\\u5e94\\u901f\\u5ea6\"}]', NULL, 'submitted', NULL, NULL, NULL, 3, 1, '2025-07-03 00:35:10', NULL, 100.00, 6, 6, NULL, NULL, '2025-07-03 02:35:10', '2025-07-03 02:35:11', NULL),
+(3, 1, '2025-07-08', '09:00:00', '09:45:00', 45, 34, 'completed', '实验顺利进行，学生积极参与观察植物根茎叶的结构。通过放大镜观察，学生能够清楚地看到植物各部分的特征。', '部分学生在使用放大镜时需要指导，有2个放大镜出现轻微划痕。', '安排学习小组互助，更换了有划痕的放大镜。', '学生对植物结构的理解比预期要好，下次可以增加更多的观察内容。实验时间安排合理。', '学生反映实验很有趣，希望能观察更多不同种类的植物。', '[{\"name\":\"\\u653e\\u5927\\u955c\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"2\\u4e2a\\u6709\\u8f7b\\u5fae\\u5212\\u75d5\\u5df2\\u66f4\\u6362\"},{\"name\":\"\\u954a\\u5b50\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u4f7f\\u7528\\u6b63\\u5e38\"},{\"name\":\"\\u57f9\\u517b\\u76bf\",\"quantity\":10,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u6e05\\u6d01\\u5b8c\\u597d\"}]', '[{\"name\":\"\\u65b0\\u9c9c\\u690d\\u7269\\u6837\\u672c\",\"quantity\":10,\"unit\":\"\\u4efd\",\"notes\":\"\\u5305\\u542b\\u6839\\u830e\\u53f6\\u5b8c\\u6574\\u7ed3\\u6784\"},{\"name\":\"\\u84b8\\u998f\\u6c34\",\"quantity\":200,\"unit\":\"ml\",\"notes\":\"\\u7528\\u4e8e\\u6e05\\u6d01\\u548c\\u4fdd\\u6e7f\"}]', '[{\"parameter\":\"\\u6839\\u957f\\u5ea6\",\"value\":\"8-12\",\"unit\":\"cm\",\"notes\":\"\\u5e73\\u5747\\u503c\"},{\"parameter\":\"\\u53f6\\u7247\\u6570\\u91cf\",\"value\":\"6-8\",\"unit\":\"\\u7247\",\"notes\":\"\\u6bcf\\u682a\\u5e73\\u5747\"},{\"parameter\":\"\\u830e\\u76f4\\u5f84\",\"value\":\"2-3\",\"unit\":\"mm\",\"notes\":\"\\u6d4b\\u91cf\\u503c\"}]', NULL, 'approved', '记录详细完整，实验执行效果良好，同意通过。', 6, '2025-07-03 02:36:02', 3, 1, '2025-07-02 02:36:02', NULL, 100.00, 5, 6, NULL, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(4, 2, '2025-07-12', '14:00:00', '14:35:00', 35, 30, 'partial', '酸碱指示剂实验进行了一半，由于时间不够，部分实验内容延后进行。', '实验准备时间过长，导致实际实验时间不足。部分试剂浓度需要调整。', '下次课继续完成剩余实验内容，提前准备试剂。', '需要更好地控制实验节奏，提前做好充分准备。', '学生对变色现象很感兴趣，希望能看到更多的变色实验。', '[{\"name\":\"\\u8bd5\\u7ba1\",\"quantity\":15,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u4f7f\\u7528\\u6b63\\u5e38\"},{\"name\":\"\\u8bd5\\u7ba1\\u67b6\",\"quantity\":5,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u7a33\\u5b9a\\u6027\\u597d\"},{\"name\":\"\\u6ef4\\u7ba1\",\"quantity\":8,\"condition\":\"\\u826f\\u597d\",\"notes\":\"2\\u4e2a\\u9700\\u8981\\u6e05\\u6d01\"}]', '[{\"name\":\"\\u77f3\\u854a\\u8bd5\\u6db2\",\"quantity\":30,\"unit\":\"ml\",\"notes\":\"0.1%\\u6d53\\u5ea6\"},{\"name\":\"\\u7a00\\u76d0\\u9178\",\"quantity\":50,\"unit\":\"ml\",\"notes\":\"0.1mol\\/L\"},{\"name\":\"\\u6c22\\u6c27\\u5316\\u94a0\\u6eb6\\u6db2\",\"quantity\":50,\"unit\":\"ml\",\"notes\":\"0.1mol\\/L\"}]', '[{\"parameter\":\"\\u9178\\u6027\\u6eb6\\u6db2\\u989c\\u8272\",\"value\":\"\\u7ea2\\u8272\",\"unit\":\"\",\"notes\":\"\\u77f3\\u854a\\u8bd5\\u6db2\\u53d8\\u8272\"},{\"parameter\":\"\\u78b1\\u6027\\u6eb6\\u6db2\\u989c\\u8272\",\"value\":\"\\u84dd\\u8272\",\"unit\":\"\",\"notes\":\"\\u77f3\\u854a\\u8bd5\\u6db2\\u53d8\\u8272\"},{\"parameter\":\"\\u53d8\\u8272\\u65f6\\u95f4\",\"value\":\"2-3\",\"unit\":\"\\u79d2\",\"notes\":\"\\u53cd\\u5e94\\u901f\\u5ea6\"}]', NULL, 'submitted', NULL, NULL, NULL, 3, 1, '2025-07-03 00:36:02', NULL, 100.00, 6, 6, NULL, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:02', NULL),
+(5, 3, '2025-07-15', '10:30:00', NULL, NULL, 28, 'in_progress', '简单电路制作实验正在进行中，学生正在组装电路。', '部分电池电量不足，需要更换。', '已更换新电池，继续实验。', '', '', '[{\"name\":\"\\u7535\\u6c60\\u76d2\",\"quantity\":8,\"condition\":\"\\u826f\\u597d\",\"notes\":\"2\\u4e2a\\u7535\\u6c60\\u76d2\\u7535\\u6c60\\u9700\\u66f4\\u6362\"},{\"name\":\"\\u5c0f\\u706f\\u6ce1\",\"quantity\":16,\"condition\":\"\\u826f\\u597d\",\"notes\":\"4\\u4e2a\\u5907\\u7528\"},{\"name\":\"\\u5bfc\\u7ebf\",\"quantity\":24,\"condition\":\"\\u826f\\u597d\",\"notes\":\"\\u9cc4\\u9c7c\\u5939\\u5b8c\\u597d\"}]', '[{\"name\":\"5\\u53f7\\u7535\\u6c60\",\"quantity\":16,\"unit\":\"\\u8282\",\"notes\":\"1.5V\\u5e72\\u7535\\u6c60\"},{\"name\":\"\\u5f00\\u5173\",\"quantity\":8,\"unit\":\"\\u4e2a\",\"notes\":\"\\u6309\\u94ae\\u5f0f\\u5f00\\u5173\"}]', '[{\"parameter\":\"\\u7535\\u8def\\u901a\\u8def\\u6570\",\"value\":\"6\",\"unit\":\"\\u4e2a\",\"notes\":\"\\u6210\\u529f\\u70b9\\u4eae\\u706f\\u6ce1\"},{\"parameter\":\"\\u7535\\u6c60\\u7535\\u538b\",\"value\":\"3.0\",\"unit\":\"V\",\"notes\":\"\\u4e24\\u8282\\u7535\\u6c60\\u4e32\\u8054\"}]', NULL, 'draft', NULL, NULL, NULL, 2, 0, NULL, NULL, 50.00, 5, 6, NULL, NULL, '2025-07-03 02:36:02', '2025-07-03 02:36:03', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `experiment_review_logs`
+--
+
+CREATE TABLE `experiment_review_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `experiment_record_id` bigint(20) UNSIGNED NOT NULL COMMENT '实验记录ID',
+  `review_type` enum('submit','approve','reject','revision_request','force_complete','batch_approve','batch_reject','ai_check','manual_check') NOT NULL COMMENT '审核类型',
+  `previous_status` varchar(50) DEFAULT NULL COMMENT '之前状态',
+  `new_status` varchar(50) NOT NULL COMMENT '新状态',
+  `review_notes` text DEFAULT NULL COMMENT '审核意见',
+  `review_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '审核详情' CHECK (json_valid(`review_details`)),
+  `attachment_files` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '附件文件' CHECK (json_valid(`attachment_files`)),
+  `review_category` enum('format','content','photo','data','safety','completeness','other') DEFAULT NULL COMMENT '审核分类',
+  `review_score` int(11) DEFAULT NULL COMMENT '审核评分(1-10)',
+  `is_ai_review` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否AI审核',
+  `ai_analysis_result` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'AI分析结果' CHECK (json_valid(`ai_analysis_result`)),
+  `reviewer_id` bigint(20) UNSIGNED NOT NULL COMMENT '审核人ID',
+  `reviewer_role` varchar(50) NOT NULL COMMENT '审核人角色',
+  `reviewer_name` varchar(100) NOT NULL COMMENT '审核人姓名',
+  `review_deadline` timestamp NULL DEFAULT NULL COMMENT '审核截止时间',
+  `review_duration` int(11) DEFAULT NULL COMMENT '审核耗时(分钟)',
+  `is_urgent` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否紧急',
+  `ip_address` varchar(45) DEFAULT NULL COMMENT '操作IP地址',
+  `user_agent` varchar(500) DEFAULT NULL COMMENT '用户代理',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `experiment_review_logs`
+--
+
+INSERT INTO `experiment_review_logs` (`id`, `experiment_record_id`, `review_type`, `previous_status`, `new_status`, `review_notes`, `review_details`, `attachment_files`, `review_category`, `review_score`, `is_ai_review`, `ai_analysis_result`, `reviewer_id`, `reviewer_role`, `reviewer_name`, `review_deadline`, `review_duration`, `is_urgent`, `ip_address`, `user_agent`, `organization_id`, `extra_data`, `created_at`, `updated_at`) VALUES
+(1, 1, 'submit', 'draft', 'submitted', '实验记录已完成，提交审核。', NULL, NULL, NULL, NULL, 0, NULL, 6, 'teacher', '张老师', NULL, 5, 0, '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 5, NULL, '2025-07-01 04:46:01', '2025-07-01 04:46:01'),
+(2, 1, 'ai_check', 'submitted', 'submitted', 'AI自动检查完成，共检查 3 张照片', NULL, NULL, NULL, NULL, 1, '{\"total_photos\":3,\"compliant_photos\":3,\"non_compliant_photos\":0,\"compliance_rate\":100,\"check_results\":[{\"photo_id\":1,\"photo_type\":\"preparation\",\"compliance_status\":\"compliant\"},{\"photo_id\":2,\"photo_type\":\"process\",\"compliance_status\":\"compliant\"},{\"photo_id\":3,\"photo_type\":\"result\",\"compliance_status\":\"compliant\"}]}', 1, 'admin', 'AI系统', NULL, 1, 0, '127.0.0.1', 'AI-System/1.0', 5, NULL, '2025-07-02 02:46:01', '2025-07-02 02:46:01'),
+(3, 1, 'approve', 'submitted', 'approved', '记录详细完整，实验执行效果良好，同意通过。', NULL, NULL, 'completeness', 9, 0, NULL, 1, 'admin', '系统管理员', NULL, 15, 0, '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 5, NULL, '2025-07-02 04:46:01', '2025-07-02 04:46:01'),
+(4, 2, 'submit', 'draft', 'submitted', '实验记录提交审核。', NULL, NULL, NULL, NULL, 0, NULL, 6, 'teacher', '李老师', NULL, 3, 0, '192.168.1.101', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 6, NULL, '2025-07-02 22:46:01', '2025-07-02 22:46:01'),
+(5, 2, 'revision_request', 'submitted', 'revision_required', '实验记录需要补充完善，请按要求修改后重新提交。', '{\"revision_requirements\":[\"\\u8865\\u5145\\u6559\\u5b66\\u53cd\\u601d\",\"\\u4e0a\\u4f20\\u66f4\\u591a\\u7167\\u7247\",\"\\u5b8c\\u5584\\u5b9e\\u9a8c\\u6570\\u636e\"],\"revision_deadline\":\"2025-07-06T12:46:01.138486Z\"}', NULL, 'content', NULL, 0, NULL, 3, 'admin', '刘校长', '2025-07-06 04:46:01', 20, 0, '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 6, NULL, '2025-07-03 02:46:01', '2025-07-03 02:46:01'),
+(6, 3, 'submit', 'draft', 'submitted', '实验记录提交审核。', NULL, NULL, NULL, NULL, 0, NULL, 6, 'teacher', '王老师', NULL, 2, 0, '192.168.1.102', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 5, NULL, '2025-07-03 04:16:01', '2025-07-03 04:16:01'),
+(7, 1, 'batch_approve', 'submitted', 'approved', '批量审核通过，记录质量良好。', '{\"batch_operation\":true,\"batch_size\":2}', NULL, 'completeness', NULL, 0, NULL, 1, 'admin', '系统管理员', NULL, 8, 0, '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 5, NULL, '2025-06-30 04:46:01', '2025-06-30 04:46:01'),
+(8, 2, 'batch_approve', 'submitted', 'approved', '批量审核通过，记录质量良好。', '{\"batch_operation\":true,\"batch_size\":2}', NULL, 'completeness', NULL, 0, NULL, 1, 'admin', '系统管理员', NULL, 8, 0, '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 6, NULL, '2025-06-30 04:46:01', '2025-06-30 04:46:01'),
+(9, 2, 'ai_check', 'submitted', 'submitted', 'AI自动检查完成，共检查 3 张照片', NULL, NULL, NULL, NULL, 1, '{\"total_photos\":3,\"compliant_photos\":3,\"non_compliant_photos\":0,\"compliance_rate\":100,\"check_results\":[{\"photo_id\":4,\"photo_type\":\"preparation\",\"compliance_status\":\"compliant\",\"analysis_result\":{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.378683Z\"}},{\"photo_id\":5,\"photo_type\":\"process\",\"compliance_status\":\"compliant\",\"analysis_result\":{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.381811Z\"}},{\"photo_id\":6,\"photo_type\":\"result\",\"compliance_status\":\"compliant\",\"analysis_result\":{\"blur_detection\":{\"is_blurry\":false,\"blur_score\":0.1},\"content_detection\":{\"has_experiment_content\":true,\"confidence\":0.85},\"safety_check\":{\"safety_violations\":[],\"is_safe\":true},\"analyzed_at\":\"2025-07-04T01:02:01.382921Z\"}}]}', 1, 'admin', '系统管理员', NULL, NULL, 0, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 6, NULL, '2025-07-03 17:02:01', '2025-07-03 17:02:01');
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `failed_jobs`
 --
 
@@ -204,6 +690,174 @@ CREATE TABLE `job_batches` (
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `materials`
+--
+
+CREATE TABLE `materials` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '材料名称',
+  `code` varchar(100) NOT NULL COMMENT '材料编码',
+  `specification` varchar(200) DEFAULT NULL COMMENT '规格型号',
+  `brand` varchar(100) DEFAULT NULL COMMENT '品牌',
+  `description` text DEFAULT NULL COMMENT '材料描述',
+  `category_id` bigint(20) UNSIGNED NOT NULL COMMENT '材料分类ID',
+  `unit` varchar(20) NOT NULL COMMENT '计量单位',
+  `unit_price` decimal(8,2) DEFAULT NULL COMMENT '单价',
+  `current_stock` int(11) NOT NULL DEFAULT 0 COMMENT '当前库存',
+  `min_stock` int(11) NOT NULL DEFAULT 0 COMMENT '最低库存',
+  `max_stock` int(11) DEFAULT NULL COMMENT '最高库存',
+  `total_purchased` int(11) NOT NULL DEFAULT 0 COMMENT '累计采购数量',
+  `total_consumed` int(11) NOT NULL DEFAULT 0 COMMENT '累计消耗数量',
+  `storage_location` varchar(200) DEFAULT NULL COMMENT '存储位置',
+  `storage_conditions` text DEFAULT NULL COMMENT '存储条件',
+  `expiry_date` date DEFAULT NULL COMMENT '有效期至',
+  `safety_notes` text DEFAULT NULL COMMENT '安全注意事项',
+  `status` enum('active','inactive','expired','out_of_stock') NOT NULL DEFAULT 'active' COMMENT '状态',
+  `supplier` varchar(200) DEFAULT NULL COMMENT '供应商',
+  `last_purchase_date` date DEFAULT NULL COMMENT '最后采购日期',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `materials`
+--
+
+INSERT INTO `materials` (`id`, `name`, `code`, `specification`, `brand`, `description`, `category_id`, `unit`, `unit_price`, `current_stock`, `min_stock`, `max_stock`, `total_purchased`, `total_consumed`, `storage_location`, `storage_conditions`, `expiry_date`, `safety_notes`, `status`, `supplier`, `last_purchase_date`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '氢氧化钠', 'MAT_NAOH_001', 'AR级，500g/瓶', '国药集团', '分析纯氢氧化钠', 1, 'g', 0.05, 1950, 500, 5000, 2000, 0, '化学试剂柜A-1', '密封保存，防潮', '2025-12-31', '强碱性，使用时佩戴防护用品', 'active', '化学试剂公司', '2025-04-24', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 18:50:20', NULL),
+(2, '盐酸', 'MAT_HCL_001', 'AR级，37%，500ml/瓶', '国药集团', '分析纯盐酸', 1, 'ml', 0.02, 2980, 1000, 8000, 3000, 0, '化学试剂柜A-2', '通风保存，远离碱性物质', '2025-06-30', '强酸性，腐蚀性强，小心使用', 'active', '化学试剂公司', '2025-04-19', 5, 1, NULL, NULL, '2025-07-02 06:01:33', '2025-07-02 18:50:20', NULL),
+(3, '洋葱表皮', 'MAT_ONION_001', '新鲜洋葱表皮', '生物材料供应商', '用于细胞观察实验', 2, '片', 1.00, 90, 20, 200, 100, 0, '生物实验室冷藏柜', '4°C冷藏保存', '2024-08-15', '使用前检查新鲜度', 'active', '生物材料公司', '2025-05-24', 5, 1, NULL, NULL, '2025-07-02 06:01:33', '2025-07-02 18:50:21', NULL),
+(4, '滤纸', 'MAT_FILTER_001', '定性滤纸，直径9cm', '实验用品厂', '实验用定性滤纸', 3, '张', 0.10, 495, 100, 1000, 500, 0, '实验用品柜B-1', '干燥保存', NULL, '无特殊安全要求', 'active', '实验用品公司', '2025-05-09', 5, 1, NULL, NULL, '2025-07-02 06:01:33', '2025-07-02 18:50:21', NULL),
+(5, '玻璃棒', 'MAT_GLASS_ROD_001', '长度20cm，直径5mm', '玻璃器皿厂', '实验用玻璃搅拌棒', 4, '根', 2.00, 50, 10, 100, 50, 0, '玻璃器皿柜C-1', '小心轻放，防止破损', NULL, '使用时小心玻璃碎片', 'active', '玻璃器皿公司', '2025-04-22', 5, 1, NULL, NULL, '2025-07-02 06:01:33', '2025-07-02 06:01:33', NULL),
+(6, '硫酸', 'MAT_H2SO4_001', 'AR级，98%，500ml/瓶', '国药集团', '分析纯浓硫酸', 1, 'ml', 0.08, 1500, 300, 3000, 1500, 0, '化学试剂柜A-3', '密封保存，防潮，通风', '2025-08-31', '强酸性，腐蚀性极强，使用时必须佩戴防护用品', 'active', '化学试剂公司', '2025-04-14', 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(7, '碳酸钠', 'MAT_NA2CO3_001', 'AR级，500g/瓶', '国药集团', '分析纯碳酸钠', 1, 'g', 0.03, 800, 200, 2000, 800, 0, '化学试剂柜B-1', '干燥保存，防潮', '2026-03-31', '避免吸入粉尘', 'active', '化学试剂公司', '2025-05-22', 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(8, '酚酞指示剂', 'MAT_PHENOL_001', '1%乙醇溶液，100ml/瓶', '天津化学', '酸碱指示剂', 1, 'ml', 0.15, 500, 100, 1000, 500, 0, '化学试剂柜C-2', '避光保存，室温', '2025-12-31', '避免接触皮肤和眼睛', 'active', '化学试剂公司', '2025-06-02', 5, 1, NULL, NULL, '2025-07-02 18:50:19', '2025-07-02 18:50:19', NULL),
+(9, '琼脂粉', 'MAT_AGAR_001', '微生物级，250g/瓶', 'Oxoid', '微生物培养基原料', 2, 'g', 0.80, 200, 50, 500, 200, 0, '生物实验室冷藏柜', '4°C冷藏保存', '2025-09-30', '使用前检查是否变质', 'active', '生物材料公司', '2025-05-08', 5, 1, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(10, '酵母菌', 'MAT_YEAST_001', '活性干酵母，10g/包', '安琪', '实验用酵母菌', 2, 'g', 2.00, 80, 20, 200, 80, 0, '生物实验室冷藏柜', '4°C冷藏保存', '2024-12-31', '使用前检查活性', 'active', '生物材料公司', '2025-05-28', 5, 1, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(11, '试管', 'MAT_TEST_TUBE_001', '硼硅玻璃，15ml，φ16×150mm', '舒博', '实验用试管', 3, '支', 1.50, 200, 50, 500, 200, 0, '玻璃器皿柜A-1', '小心轻放，防止破损', NULL, '使用时小心玻璃碎片', 'active', '实验用品公司', '2025-04-05', 5, 1, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(12, '橡胶手套', 'MAT_GLOVES_001', '一次性乳胶手套，M号', '蓝帆', '实验防护手套', 3, '双', 0.50, 500, 100, 1000, 500, 0, '防护用品柜', '干燥保存，避免阳光直射', '2026-06-30', '使用前检查是否破损', 'active', '防护用品公司', '2025-05-04', 5, 1, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(13, '酒精灯', 'MAT_ALCOHOL_LAMP_001', '玻璃材质，150ml容量', '教学仪器厂', '实验加热用酒精灯', 4, '个', 8.00, 30, 10, 50, 30, 0, '实验器材柜B-2', '小心轻放，防止破损', NULL, '使用时注意防火安全', 'active', '教学仪器公司', '2025-04-15', 5, 1, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `material_categories`
+--
+
+CREATE TABLE `material_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(100) NOT NULL COMMENT '分类名称',
+  `code` varchar(50) NOT NULL COMMENT '分类编码',
+  `description` text DEFAULT NULL COMMENT '分类描述',
+  `parent_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '父级分类ID',
+  `subject` varchar(50) DEFAULT NULL COMMENT '适用学科',
+  `grade_range` varchar(100) DEFAULT NULL COMMENT '适用年级范围',
+  `material_type` enum('consumable','reusable','chemical','biological') NOT NULL COMMENT '材料类型',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active' COMMENT '状态',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `material_categories`
+--
+
+INSERT INTO `material_categories` (`id`, `name`, `code`, `description`, `parent_id`, `subject`, `grade_range`, `material_type`, `sort_order`, `status`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '化学试剂', 'CHEM_REAGENT', '各类化学试剂', NULL, 'chemistry', 'grade7-12', 'chemical', 1, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(2, '生物材料', 'BIO_MATERIAL', '生物实验材料', NULL, 'biology', 'grade7-12', 'biological', 2, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(3, '消耗品', 'CONSUMABLE', '实验消耗品', NULL, 'general', 'all', 'consumable', 3, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL),
+(4, '可重复使用材料', 'REUSABLE', '可重复使用的实验材料', NULL, 'general', 'all', 'reusable', 4, 'active', 5, 1, NULL, NULL, '2025-07-02 06:01:32', '2025-07-02 06:01:32', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `material_stock_logs`
+--
+
+CREATE TABLE `material_stock_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `log_code` varchar(50) NOT NULL COMMENT '日志编号',
+  `material_id` bigint(20) UNSIGNED NOT NULL COMMENT '材料ID',
+  `operation_type` enum('purchase','usage','adjustment','expired','damaged') NOT NULL COMMENT '操作类型',
+  `quantity_before` int(11) NOT NULL COMMENT '操作前数量',
+  `quantity_change` int(11) NOT NULL COMMENT '变更数量(正数为增加，负数为减少)',
+  `quantity_after` int(11) NOT NULL COMMENT '操作后数量',
+  `unit_price` decimal(8,2) DEFAULT NULL COMMENT '单价',
+  `total_amount` decimal(10,2) DEFAULT NULL COMMENT '总金额',
+  `reason` text NOT NULL COMMENT '操作原因',
+  `reference_type` varchar(50) DEFAULT NULL COMMENT '关联类型',
+  `reference_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '关联ID',
+  `notes` text DEFAULT NULL COMMENT '备注',
+  `operator_id` bigint(20) UNSIGNED NOT NULL COMMENT '操作人ID',
+  `operated_at` datetime NOT NULL COMMENT '操作时间',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `material_stock_logs`
+--
+
+INSERT INTO `material_stock_logs` (`id`, `log_code`, `material_id`, `operation_type`, `quantity_before`, `quantity_change`, `quantity_after`, `unit_price`, `total_amount`, `reason`, `reference_type`, `reference_id`, `notes`, `operator_id`, `operated_at`, `organization_id`, `extra_data`, `created_at`, `updated_at`) VALUES
+(1, 'LOG_20250703025020_1', 1, 'usage', 2000, -50, 1950, NULL, NULL, '酸碱中和滴定实验', 'material_usage', 1, NULL, 6, '2025-07-03 02:50:20', 5, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20'),
+(2, 'LOG_20250703025020_2', 2, 'usage', 3000, -20, 2980, NULL, NULL, '金属活动性实验', 'material_usage', 2, NULL, 6, '2025-07-03 02:50:20', 5, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20'),
+(3, 'LOG_20250703025021_3', 3, 'usage', 100, -10, 90, NULL, NULL, '酸碱指示剂实验', 'material_usage', 3, NULL, 6, '2025-07-03 02:50:21', 5, NULL, '2025-07-02 18:50:21', '2025-07-02 18:50:21'),
+(4, 'LOG_20250703025021_4', 4, 'usage', 500, -5, 495, NULL, NULL, '微生物培养基制备', 'material_usage', 4, NULL, 1, '2025-07-03 02:50:21', 5, NULL, '2025-07-02 18:50:21', '2025-07-02 18:50:21');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `material_usages`
+--
+
+CREATE TABLE `material_usages` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `usage_code` varchar(50) NOT NULL COMMENT '使用编号',
+  `material_id` bigint(20) UNSIGNED NOT NULL COMMENT '材料ID',
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT '使用人ID',
+  `experiment_catalog_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT '关联实验目录ID',
+  `quantity_used` int(11) NOT NULL COMMENT '使用数量',
+  `purpose` text NOT NULL COMMENT '使用目的',
+  `used_at` datetime NOT NULL COMMENT '使用时间',
+  `notes` text DEFAULT NULL COMMENT '使用备注',
+  `usage_type` enum('experiment','maintenance','teaching','other') NOT NULL DEFAULT 'experiment' COMMENT '使用类型',
+  `class_name` varchar(100) DEFAULT NULL COMMENT '班级名称',
+  `student_count` int(11) DEFAULT NULL COMMENT '学生人数',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `material_usages`
+--
+
+INSERT INTO `material_usages` (`id`, `usage_code`, `material_id`, `user_id`, `experiment_catalog_id`, `quantity_used`, `purpose`, `used_at`, `notes`, `usage_type`, `class_name`, `student_count`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'USE_20250703025020_1', 1, 6, 1, 50, '酸碱中和滴定实验', '2025-07-02 02:50:20', '学生分组实验，每组使用约1.5ml', 'experiment', '九年级(1)班', 35, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(2, 'USE_20250703025020_2', 2, 6, 1, 20, '金属活动性实验', '2025-06-30 02:50:20', '演示实验用量', 'experiment', '九年级(2)班', 32, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(3, 'USE_20250703025020_3', 3, 6, 1, 10, '酸碱指示剂实验', '2025-06-28 02:50:20', '课堂演示实验', 'teaching', '八年级(3)班', 30, 5, 6, NULL, NULL, '2025-07-02 18:50:20', '2025-07-02 18:50:20', NULL),
+(4, 'USE_20250703025021_4', 4, 1, 1, 5, '微生物培养基制备', '2025-06-26 02:50:20', '生物实验室培养基准备', 'experiment', NULL, NULL, 5, 1, NULL, NULL, '2025-07-02 18:50:21', '2025-07-02 18:50:21', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `migrations`
 --
 
@@ -254,7 +908,24 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (37, '2025_06_25_080003_create_permission_conflicts_table', 10),
 (38, '2025_06_25_112210_create_school_import_logs_table', 11),
 (39, '2025_06_27_143637_add_primary_organization_id_to_users_table', 12),
-(40, '2025_06_28_020000_add_source_to_user_permissions_table', 13);
+(40, '2025_06_28_020000_add_source_to_user_permissions_table', 13),
+(41, '2025_06_28_030000_create_organization_permissions_table', 14),
+(42, '2025_07_02_100001_create_experiment_catalogs_table', 14),
+(43, '2025_07_02_100002_create_curriculum_standards_table', 14),
+(44, '2025_07_02_100003_create_photo_templates_table', 14),
+(45, '2025_07_02_100004_create_catalog_versions_table', 14),
+(46, '2025_07_02_100005_create_catalog_import_logs_table', 14),
+(47, '2025_07_02_120001_create_equipment_categories_table', 15),
+(48, '2025_07_02_120002_create_equipment_table', 15),
+(49, '2025_07_02_120003_create_material_categories_table', 15),
+(50, '2025_07_02_120004_create_materials_table', 15),
+(51, '2025_07_02_120005_create_equipment_borrowings_table', 15),
+(52, '2025_07_02_120006_create_material_usages_table', 15),
+(53, '2025_07_02_120007_create_material_stock_logs_table', 15),
+(54, '2025_07_03_100001_create_experiment_plans_table', 16),
+(55, '2025_07_03_110001_create_experiment_records_table', 17),
+(56, '2025_07_03_110002_create_experiment_photos_table', 17),
+(59, '2025_07_03_120001_create_experiment_review_logs_table', 18);
 
 -- --------------------------------------------------------
 
@@ -347,6 +1018,23 @@ CREATE TABLE `organization_import_logs` (
 
 INSERT INTO `organization_import_logs` (`id`, `filename`, `user_id`, `parent_id`, `total_rows`, `success_count`, `failed_count`, `errors`, `warnings`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
 (1, 'test_organizations.csv', 1, 4, 2, 2, 0, '[]', '[]', 'completed', NULL, '2025-06-21 05:24:51', '2025-06-21 05:24:52');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `organization_permissions`
+--
+
+CREATE TABLE `organization_permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `organization_id` bigint(20) UNSIGNED NOT NULL,
+  `permission_id` bigint(20) UNSIGNED NOT NULL,
+  `access_type` enum('allow','deny') NOT NULL DEFAULT 'allow' COMMENT '访问类型',
+  `granted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `granted_at` timestamp NULL DEFAULT NULL COMMENT '授权时间',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1030,13 +1718,85 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (23, 'App\\Models\\User', 1, 'auth-token', '14df7a73dc3ebcd7a2ff327f987dc5f85959b94c24b594e5427d50caca80d9d4', '[\"*\"]', '2025-06-25 23:59:35', NULL, '2025-06-25 00:49:46', '2025-06-25 23:59:35'),
 (24, 'App\\Models\\User', 1, 'auth-token', 'd2f6638468aacb19a5324efcf436b0bb76cc300ad1ae0ed56e73436b6b351024', '[\"*\"]', '2025-06-25 23:54:48', NULL, '2025-06-25 23:54:25', '2025-06-25 23:54:48'),
 (25, 'App\\Models\\User', 1, 'auth-token', '6de918783c954bb0717974e3860d61682228ffbcd4a20821a22918120d96da06', '[\"*\"]', '2025-06-26 03:55:09', NULL, '2025-06-26 00:15:41', '2025-06-26 03:55:09'),
-(35, 'App\\Models\\User', 1, 'auth-token', 'f82493c119c4640595b6808c11b642b3bffc0d56bd677924d10ad9e293d112aa', '[\"*\"]', '2025-06-26 18:41:11', NULL, '2025-06-26 18:37:37', '2025-06-26 18:41:11'),
 (37, 'App\\Models\\User', 1, 'auth-token', 'a7f6a969173c253b0e9786683ec69d7a89311cffacb51cafb75c4898c8e5428e', '[\"*\"]', '2025-06-27 04:31:12', NULL, '2025-06-27 04:31:11', '2025-06-27 04:31:12'),
 (38, 'App\\Models\\User', 1, 'auth-token', '7814813786f3b393bf1566f02b18b9bd484499343e7474848e7f7ab07c1294ea', '[\"*\"]', '2025-06-27 04:35:05', NULL, '2025-06-27 04:35:04', '2025-06-27 04:35:05'),
 (39, 'App\\Models\\User', 1, 'auth-token', '641c5a1c10ff3ba71fe125267659563b3a728f7026330e1039a87082c314ea50', '[\"*\"]', '2025-06-27 04:37:49', NULL, '2025-06-27 04:37:35', '2025-06-27 04:37:49'),
 (43, 'App\\Models\\User', 1, 'auth-token', '512c6de032ad3aabf838337cc3c0e25df082e5dbbf5e8cb3bae6e7e188bd14ad', '[\"*\"]', '2025-06-27 16:52:33', NULL, '2025-06-27 15:36:53', '2025-06-27 16:52:33'),
 (44, 'App\\Models\\User', 1, 'auth-token', 'fd019b6b572a0ee6bbe9ea4483a93a6e396b58499d49155ad81e58a740c6a388', '[\"*\"]', '2025-06-27 16:54:27', NULL, '2025-06-27 16:54:15', '2025-06-27 16:54:27'),
-(47, 'App\\Models\\User', 1, 'auth-token', 'fe5d0d73243cb803fe5ee21f1d31ef0f8d96c69570a5dc18379eb3b781866d50', '[\"*\"]', '2025-06-27 18:42:02', NULL, '2025-06-27 17:40:13', '2025-06-27 18:42:02');
+(47, 'App\\Models\\User', 1, 'auth-token', 'fe5d0d73243cb803fe5ee21f1d31ef0f8d96c69570a5dc18379eb3b781866d50', '[\"*\"]', '2025-07-02 05:51:00', NULL, '2025-06-27 17:40:13', '2025-07-02 05:51:00'),
+(49, 'App\\Models\\User', 1, 'auth-token', 'b6436b64cadc086d106d3c1524508bf8e2a825334412517eb0fd50d3d3d2a281', '[\"*\"]', '2025-07-02 01:06:09', NULL, '2025-07-02 00:45:44', '2025-07-02 01:06:09'),
+(50, 'App\\Models\\User', 1, 'auth-token', '5ccf8b5140891fc651885f4fe9fafa2e5a70f3a38d9abf1c3bc6c04a9991f4b6', '[\"*\"]', '2025-07-02 19:36:34', NULL, '2025-07-02 01:08:36', '2025-07-02 19:36:34'),
+(51, 'App\\Models\\User', 1, 'auth-token', 'c95b6a39ffdea6a55bf71c68ddd33d1cf4caf651facb27761e2f291580cb57f2', '[\"*\"]', NULL, NULL, '2025-07-02 06:06:29', '2025-07-02 06:06:29'),
+(52, 'App\\Models\\User', 1, 'auth-token', '4fc176c9f193345775c3438ed60f7ca58773a649766f8f01a83edd90ef609a24', '[\"*\"]', '2025-07-02 06:16:57', NULL, '2025-07-02 06:13:38', '2025-07-02 06:16:57'),
+(54, 'App\\Models\\User', 1, 'auth-token', '414dd033421e8d632427e67aef3b1307f855466b1833afedbe5607243f2411e3', '[\"*\"]', NULL, NULL, '2025-07-02 18:41:01', '2025-07-02 18:41:01'),
+(56, 'App\\Models\\User', 1, 'auth-token', '73c2d3f286a3e6e7dea3750001fbfef35e9c0db93977c2e9979feefad4d361cf', '[\"*\"]', '2025-07-02 19:32:28', NULL, '2025-07-02 18:52:57', '2025-07-02 19:32:28'),
+(57, 'App\\Models\\User', 1, 'auth-token', 'bd6d4c83c0c843d0f368399edfc238840cf460c2ef1fae73be3914911c6f964d', '[\"*\"]', '2025-07-02 19:33:23', NULL, '2025-07-02 19:32:44', '2025-07-02 19:33:23'),
+(60, 'App\\Models\\User', 1, 'auth-token', 'e240e331da8f37290304dab9d31b2fccbfd64a259b136b47dbcced4a47640a9a', '[\"*\"]', NULL, NULL, '2025-07-03 02:25:22', '2025-07-03 02:25:22'),
+(61, 'App\\Models\\User', 1, 'auth-token', 'ea94d31b2c6887717d62effaced4f8ffc1322d6b5e15ad09f3e9cb1181c4787e', '[\"*\"]', NULL, NULL, '2025-07-03 02:25:29', '2025-07-03 02:25:29'),
+(62, 'App\\Models\\User', 1, 'auth-token', '15dc1a428035302d56090fbd3b02c6ed50678908c7a883fba8e42ccfcbb74de4', '[\"*\"]', NULL, NULL, '2025-07-03 05:08:11', '2025-07-03 05:08:11'),
+(67, 'App\\Models\\User', 1, 'auth-token', '7485d21b72cc31fe609e47ac1df4f12b90ba7523cc97ff5843014c7937935519', '[\"*\"]', '2025-07-03 06:27:46', NULL, '2025-07-03 06:20:35', '2025-07-03 06:27:46'),
+(68, 'App\\Models\\User', 1, 'auth-token', 'cfded0c75f98fed69bd88032f6b7a50c75dc4a681d74c432a0660c238f2bbab2', '[\"*\"]', NULL, NULL, '2025-07-03 06:30:37', '2025-07-03 06:30:37'),
+(69, 'App\\Models\\User', 3, 'auth-token', 'd4ff8f85989dd96b872ab05be6fd46791521f3c3c90438ed94779de4a97c9e27', '[\"*\"]', NULL, NULL, '2025-07-03 06:30:46', '2025-07-03 06:30:46'),
+(71, 'App\\Models\\User', 1, 'auth-token', 'da8813b335e9f052d7a5dcb166b335fb8ef3ed5d240955aead191fccbc6c50e2', '[\"*\"]', '2025-07-03 06:32:18', NULL, '2025-07-03 06:32:11', '2025-07-03 06:32:18'),
+(77, 'App\\Models\\User', 1, 'auth-token', '57a5618052d6381282622a645846c2fef6e8b234eb4fa6bbd56d1bbff217dea7', '[\"*\"]', '2025-07-03 23:39:53', NULL, '2025-07-03 22:35:45', '2025-07-03 23:39:53'),
+(78, 'App\\Models\\User', 1, 'auth-token', '27312bfaaccd7d993fd5e1370acc0fdac17a80fe985ef3967abe377595b2f05d', '[\"*\"]', NULL, NULL, '2025-07-03 23:01:11', '2025-07-03 23:01:11'),
+(79, 'App\\Models\\User', 1, 'auth-token', 'd882f6b2a3fdf19621898218560ae110de81adad1fc48f7f446df066c3d6e536', '[\"*\"]', NULL, NULL, '2025-07-03 23:01:44', '2025-07-03 23:01:44'),
+(80, 'App\\Models\\User', 1, 'auth-token', 'a6ba2b0a643623eec3000c9087d2b3164b8c11752f9a7615dbcb619dd2bbef35', '[\"*\"]', NULL, NULL, '2025-07-03 23:02:23', '2025-07-03 23:02:23'),
+(81, 'App\\Models\\User', 1, 'auth-token', 'db714b6457873dd6fc849de3eb30f11258c9c2ffd5fbdac817c0f954ff4bb809', '[\"*\"]', '2025-07-03 23:08:05', NULL, '2025-07-03 23:08:04', '2025-07-03 23:08:05'),
+(82, 'App\\Models\\User', 1, 'auth-token', 'e24e700373c282684f2df6ba558920d510db89145c6b872de9b0138a0e2602a1', '[\"*\"]', '2025-07-03 23:14:10', NULL, '2025-07-03 23:14:10', '2025-07-03 23:14:10'),
+(83, 'App\\Models\\User', 1, 'auth-token', '84b8a3099b8ce4ce4aa1a1d74f775e283cd248262cfdb8016019c49888d08af2', '[\"*\"]', '2025-07-03 23:19:07', NULL, '2025-07-03 23:19:07', '2025-07-03 23:19:07'),
+(84, 'App\\Models\\User', 1, 'auth-token', '528fbabc54fddcfd360cacba4bd8e1e6bff244fe5113d242fba350537dde735b', '[\"*\"]', '2025-07-03 23:27:15', NULL, '2025-07-03 23:27:14', '2025-07-03 23:27:15'),
+(85, 'App\\Models\\User', 1, 'auth-token', '14a02ec6c421d1dc95b7b87e1f06ad06fcc5da9e46ee09136879f0f4777b8734', '[\"*\"]', '2025-07-03 23:30:43', NULL, '2025-07-03 23:30:42', '2025-07-03 23:30:43'),
+(86, 'App\\Models\\User', 1, 'auth-token', 'f860dfa4bb583708e45540aa6d15e3d4a41ab796e1c1f14b7d21d4bca6681e2e', '[\"*\"]', '2025-07-03 23:34:36', NULL, '2025-07-03 23:34:35', '2025-07-03 23:34:36'),
+(87, 'App\\Models\\User', 1, 'auth-token', '9caf652078305f9a4480c0f2f0712adddf2a1ead4576e8a7a668390e5ee630c4', '[\"*\"]', '2025-07-03 23:40:46', NULL, '2025-07-03 23:40:46', '2025-07-03 23:40:46'),
+(88, 'App\\Models\\User', 1, 'auth-token', '95804f333c502e3b3bd2c8db3099066b82833859b6feb6db9948f4c7e281290c', '[\"*\"]', '2025-07-03 23:52:30', NULL, '2025-07-03 23:52:30', '2025-07-03 23:52:30'),
+(89, 'App\\Models\\User', 1, 'auth-token', 'ddef03d32b79d3b97e5d2f3aa0722ea58194617454c9ac7bf5f40c038938266e', '[\"*\"]', '2025-07-04 00:22:50', NULL, '2025-07-04 00:22:50', '2025-07-04 00:22:50'),
+(90, 'App\\Models\\User', 1, 'auth-token', '7ec08c3fa1de14b24b1ad4e8dbc5e0534293122abc1cc7ce6e5c8c3376d8f104', '[\"*\"]', '2025-07-04 00:35:00', NULL, '2025-07-04 00:34:59', '2025-07-04 00:35:00'),
+(91, 'App\\Models\\User', 1, 'auth-token', 'c95339e8228efcbe3e67fc71f65c12d6021093c6403bf12e5dde1380d95e5663', '[\"*\"]', '2025-07-04 01:07:02', NULL, '2025-07-04 01:07:01', '2025-07-04 01:07:02'),
+(92, 'App\\Models\\User', 1, 'auth-token', 'e69cf2f52d07a6145d156feb21004e9adb79d1e990aa1ecf3dc3be5fd252b73d', '[\"*\"]', '2025-07-04 01:37:40', NULL, '2025-07-04 01:37:40', '2025-07-04 01:37:40'),
+(93, 'App\\Models\\User', 1, 'auth-token', '00a7517c9f086201721c4b2b76a5c06968aebf392e4ea182c24235f0b2ab7767', '[\"*\"]', '2025-07-04 01:39:04', NULL, '2025-07-04 01:39:03', '2025-07-04 01:39:04'),
+(94, 'App\\Models\\User', 1, 'auth-token', '39b015d8bccf3d834919bc6684c9d9da5d7e1602d049cc0967dad261ba175ad8', '[\"*\"]', '2025-07-04 01:40:35', NULL, '2025-07-04 01:40:34', '2025-07-04 01:40:35'),
+(95, 'App\\Models\\User', 1, 'auth-token', 'a59d63647729b508d339a761c81ef3c56d01c45dec0fc343d8ec7765c6696196', '[\"*\"]', '2025-07-04 01:41:00', NULL, '2025-07-04 01:40:59', '2025-07-04 01:41:00'),
+(96, 'App\\Models\\User', 1, 'auth-token', '2d47c3fd8e2194bfbfc4f0aa189e065a0d6b9e9afaca5f0b7a9e07e9af74886e', '[\"*\"]', '2025-07-04 01:42:35', NULL, '2025-07-04 01:42:35', '2025-07-04 01:42:35'),
+(97, 'App\\Models\\User', 1, 'auth-token', '1ca8ff70b8f04cbdaf9c434da30054a6ad3858a252582acc763dae5c70ff4dba', '[\"*\"]', '2025-07-04 01:42:55', NULL, '2025-07-04 01:42:55', '2025-07-04 01:42:55'),
+(110, 'App\\Models\\User', 1, 'auth-token', 'aed4681cf1fdabec66c28a99ea261e0983bea892782960110339b25faba5b201', '[\"*\"]', '2025-07-04 05:54:02', NULL, '2025-07-04 05:52:19', '2025-07-04 05:54:02'),
+(111, 'App\\Models\\User', 1, 'auth-token', 'b1695783fb5c4bc6b76d3d1cd41b939b892c172582b97e4384c4c870f2a73cb0', '[\"*\"]', '2025-07-04 06:09:11', NULL, '2025-07-04 06:08:57', '2025-07-04 06:09:11');
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `photo_templates`
+--
+
+CREATE TABLE `photo_templates` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL COMMENT '模板名称',
+  `code` varchar(50) NOT NULL COMMENT '模板编码',
+  `subject` enum('physics','chemistry','biology','science') NOT NULL COMMENT '学科',
+  `grade` enum('grade1','grade2','grade3','grade4','grade5','grade6','grade7','grade8','grade9') NOT NULL COMMENT '年级',
+  `textbook_version` varchar(100) NOT NULL COMMENT '教材版本',
+  `experiment_type` enum('demonstration','group','individual','inquiry') NOT NULL COMMENT '实验类型',
+  `description` text DEFAULT NULL COMMENT '模板描述',
+  `required_photos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '必需照片配置' CHECK (json_valid(`required_photos`)),
+  `optional_photos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '可选照片配置' CHECK (json_valid(`optional_photos`)),
+  `photo_specifications` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '照片规格要求' CHECK (json_valid(`photo_specifications`)),
+  `status` enum('active','inactive','draft') NOT NULL DEFAULT 'draft' COMMENT '状态',
+  `organization_id` bigint(20) UNSIGNED NOT NULL COMMENT '所属组织ID',
+  `created_by` bigint(20) UNSIGNED NOT NULL COMMENT '创建人ID',
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT '更新人ID',
+  `extra_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '扩展数据' CHECK (json_valid(`extra_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `photo_templates`
+--
+
+INSERT INTO `photo_templates` (`id`, `name`, `code`, `subject`, `grade`, `textbook_version`, `experiment_type`, `description`, `required_photos`, `optional_photos`, `photo_specifications`, `status`, `organization_id`, `created_by`, `updated_by`, `extra_data`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '小学科学观察实验照片模板', 'PT_SCI_OBS', 'science', 'grade3', '人教版2022', 'group', '适用于小学科学观察类实验的照片拍摄模板', '[{\"name\":\"\\u5b9e\\u9a8c\\u6750\\u6599\\u51c6\\u5907\",\"description\":\"\\u5c55\\u793a\\u5b9e\\u9a8c\\u6240\\u9700\\u7684\\u6240\\u6709\\u6750\\u6599\",\"timing\":\"before\",\"angle\":\"overview\"},{\"name\":\"\\u5b66\\u751f\\u89c2\\u5bdf\\u8fc7\\u7a0b\",\"description\":\"\\u5b66\\u751f\\u4f7f\\u7528\\u653e\\u5927\\u955c\\u89c2\\u5bdf\\u7684\\u8fc7\\u7a0b\",\"timing\":\"during\",\"angle\":\"close-up\"},{\"name\":\"\\u89c2\\u5bdf\\u8bb0\\u5f55\\u7ed3\\u679c\",\"description\":\"\\u5b66\\u751f\\u8bb0\\u5f55\\u7684\\u89c2\\u5bdf\\u7ed3\\u679c\",\"timing\":\"after\",\"angle\":\"document\"}]', '[{\"name\":\"\\u5c0f\\u7ec4\\u8ba8\\u8bba\",\"description\":\"\\u5b66\\u751f\\u5c0f\\u7ec4\\u8ba8\\u8bba\\u5b9e\\u9a8c\\u7ed3\\u679c\",\"timing\":\"after\",\"angle\":\"group\"}]', '{\"resolution\":\"1920x1080\",\"format\":\"JPG\",\"quality\":\"high\",\"lighting\":\"natural_light_preferred\"}', 'active', 5, 3, NULL, NULL, '2025-07-01 22:51:30', '2025-07-01 22:51:30', NULL),
+(2, '初中化学实验照片模板', 'PT_CHEM_EXP', 'chemistry', 'grade9', '人教版2022', 'demonstration', '适用于初中化学演示实验的照片拍摄模板', '[{\"name\":\"\\u5b9e\\u9a8c\\u5668\\u6750\\u51c6\\u5907\",\"description\":\"\\u5b9e\\u9a8c\\u524d\\u5668\\u6750\\u548c\\u8bd5\\u5242\\u7684\\u51c6\\u5907\\u60c5\\u51b5\",\"timing\":\"before\",\"angle\":\"overview\"},{\"name\":\"\\u5b9e\\u9a8c\\u64cd\\u4f5c\\u8fc7\\u7a0b\",\"description\":\"\\u6559\\u5e08\\u6f14\\u793a\\u5b9e\\u9a8c\\u64cd\\u4f5c\\u7684\\u5173\\u952e\\u6b65\\u9aa4\",\"timing\":\"during\",\"angle\":\"close-up\"},{\"name\":\"\\u5b9e\\u9a8c\\u73b0\\u8c61\\u8bb0\\u5f55\",\"description\":\"\\u5b9e\\u9a8c\\u4e2d\\u51fa\\u73b0\\u7684\\u989c\\u8272\\u53d8\\u5316\\u7b49\\u73b0\\u8c61\",\"timing\":\"during\",\"angle\":\"close-up\"},{\"name\":\"\\u5b89\\u5168\\u9632\\u62a4\\u63aa\\u65bd\",\"description\":\"\\u5b9e\\u9a8c\\u4e2d\\u7684\\u5b89\\u5168\\u9632\\u62a4\\u63aa\\u65bd\\u5c55\\u793a\",\"timing\":\"during\",\"angle\":\"safety\"}]', '[{\"name\":\"\\u5b66\\u751f\\u89c2\\u5bdf\\u53cd\\u5e94\",\"description\":\"\\u5b66\\u751f\\u89c2\\u5bdf\\u5b9e\\u9a8c\\u73b0\\u8c61\\u7684\\u53cd\\u5e94\",\"timing\":\"during\",\"angle\":\"audience\"},{\"name\":\"\\u5b9e\\u9a8c\\u603b\\u7ed3\\u8ba8\\u8bba\",\"description\":\"\\u5b9e\\u9a8c\\u540e\\u7684\\u603b\\u7ed3\\u548c\\u8ba8\\u8bba\",\"timing\":\"after\",\"angle\":\"classroom\"}]', '{\"resolution\":\"1920x1080\",\"format\":\"JPG\",\"quality\":\"high\",\"lighting\":\"lab_lighting\",\"safety_note\":\"ensure_no_hazardous_materials_visible\"}', 'active', 5, 3, NULL, NULL, '2025-07-01 22:51:30', '2025-07-01 22:51:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -1108,9 +1868,10 @@ CREATE TABLE `role_user` (
 INSERT INTO `role_user` (`id`, `user_id`, `role_id`, `organization_id`, `scope_type`, `effective_date`, `expiry_date`, `status`, `remarks`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, 3, 'all_subordinates', '2020-01-01', NULL, 'active', NULL, 1, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
 (2, 2, 5, 4, 'all_subordinates', '2018-09-01', NULL, 'active', NULL, 1, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
-(3, 3, 6, 5, 'current_org', '2015-09-01', NULL, 'active', NULL, 2, '2025-06-27 04:49:40', '2025-06-27 04:49:40'),
+(3, 3, 6, 5, 'current_org', '2015-09-01', NULL, 'active', NULL, 1, '2025-06-27 04:49:40', '2025-07-04 05:48:27'),
 (4, 6, 5, 16, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-06-27 15:32:29', '2025-06-27 17:23:19'),
-(7, 3, 5, 5, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-06-27 17:24:24', '2025-06-27 17:24:24');
+(8, 7, 8, 5, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-07-04 05:49:20', '2025-07-04 05:49:20'),
+(9, 8, 9, 5, 'current_org', NULL, NULL, 'active', NULL, 1, '2025-07-04 05:51:10', '2025-07-04 05:51:10');
 
 -- --------------------------------------------------------
 
@@ -1252,10 +2013,12 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `name`, `real_name`, `gender`, `birth_date`, `phone`, `id_card`, `address`, `department`, `position`, `title`, `hire_date`, `last_login_at`, `last_login_ip`, `preferences`, `remarks`, `email`, `organization_id`, `primary_organization_id`, `employee_id`, `user_type`, `status`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'sysadmin', '系统管理员', '系统管理员', 'male', '1980-01-01', '13800000001', '130100198001010001', '河北省石家庄市长安区', '信息中心', '系统管理员', '高级工程师', '2020-01-01', '2025-06-20 05:40:05', '127.0.0.1', NULL, NULL, 'sysadmin@gcqets.edu.cn', 3, NULL, 'SYS001', 'admin', 'active', '2025-06-27 04:29:12', '$2y$12$8bZMXLBYC0witTO1ZbLKfuMEinI9C5eH6TEwHhTLq8nlFcEYEkgJS', NULL, '2025-06-20 01:16:56', '2025-06-27 04:29:12', NULL),
-(2, 'lianzhou_admin', '赵学区主任', '赵学区主任', 'male', '1975-05-15', '13800000002', '130100197505150002', '河北省石家庄市藁城区廉州镇', '廉州学区', '学区主任', '高级教师', '2018-09-01', NULL, NULL, NULL, NULL, 'zhao.admin@gcqets.edu.cn', 4, NULL, 'LZ001', 'supervisor', 'active', '2025-06-27 04:29:12', '$2y$12$cSPnC/RvfHreCpqYU3liLu3Hnc9ZNQP5QYgBTBvXtekCcCBzNUypq', NULL, '2025-06-20 01:16:56', '2025-06-27 04:29:12', NULL),
-(3, 'dongcheng_principal', '刘校长', '刘校长', 'male', '1970-08-20', '13800000003', '130100197008200003', '河北省石家庄市藁城区廉州镇东城村', '校长室', '校长', '特级教师', '2015-09-01', NULL, NULL, NULL, NULL, 'liu.principal@dongcheng.edu.cn', 5, NULL, 'DC001', 'admin', 'active', '2025-06-27 04:29:12', '$2y$12$sdzWbPf86hvvl.Z.lnCx2.UDcXqFbaNpnv5gMiTmHPr4QDXTzDWsi', NULL, '2025-06-20 01:16:57', '2025-06-27 04:29:12', NULL),
-(6, 'gs_admin', 'hh', 'hh', 'male', NULL, '15123445677', NULL, NULL, 'quzhongxin', 'gly', NULL, NULL, NULL, NULL, NULL, '1133', 'hh78@163.com', NULL, 16, '123', 'teacher', 'active', NULL, '$2y$12$NF8dtcrLqelgpGe7J1aXAuqHulAWi4TagV.xLYrbZsCT1KXiW/UxK', NULL, '2025-06-27 15:32:29', '2025-06-27 17:23:18', NULL);
+(1, 'sysadmin', '系统管理员', '系统管理员', 'male', '1980-01-01', '13800000001', '130100198001010001', '河北省石家庄市长安区', '信息中心', '系统管理员', '高级工程师', '2020-01-01', '2025-06-20 05:40:05', '127.0.0.1', NULL, NULL, 'sysadmin@gcqets.edu.cn', 3, 5, 'SYS001', 'admin', 'active', '2025-07-02 00:08:59', '$2y$12$OTtNGn5toyQ4T/c5fqU5FOQhQCjzLjLGtQdLiHfVoOZ5jcpZKCDoK', NULL, '2025-06-20 01:16:56', '2025-07-02 19:31:06', NULL),
+(2, 'lianzhou_admin', '赵学区主任', '赵学区主任', 'male', '1975-05-15', '13800000002', '130100197505150002', '河北省石家庄市藁城区廉州镇', '廉州学区', '学区主任', '高级教师', '2018-09-01', NULL, NULL, NULL, NULL, 'zhao.admin@gcqets.edu.cn', 4, NULL, 'LZ001', 'supervisor', 'active', '2025-07-02 00:08:59', '$2y$12$xIlKdktr6dlGQQCsZQ5mq.qKtsbarqyPEvlCzwAMotrjk02.7o5HG', NULL, '2025-06-20 01:16:56', '2025-07-02 00:08:59', NULL),
+(3, 'dongcheng_principal', '刘校长', '刘校长', 'male', '1970-08-20', '13800000003', '130100197008200003', '河北省石家庄市藁城区廉州镇东城村', '校长室', '校长', '特级教师', '2015-09-01', NULL, NULL, NULL, NULL, 'liu.principal@dongcheng.edu.cn', 5, 5, 'DC001', 'admin', 'active', '2025-07-02 00:09:00', '$2y$12$bnDZYWgI4Os6sIscLnSRTeSxCWKF6tY37S4JnLJQQoKNuwpdm/v8i', NULL, '2025-06-20 01:16:57', '2025-07-04 05:48:27', NULL),
+(6, 'gs_admin', 'hh', 'hh', 'male', NULL, '15123445677', NULL, NULL, 'quzhongxin', 'gly', NULL, NULL, NULL, NULL, NULL, '1133', 'hh78@163.com', NULL, 16, '123', 'teacher', 'active', NULL, '$2y$12$NF8dtcrLqelgpGe7J1aXAuqHulAWi4TagV.xLYrbZsCT1KXiW/UxK', NULL, '2025-06-27 15:32:29', '2025-06-27 17:23:18', NULL),
+(7, 'li111', '李李', '李李', 'male', NULL, '14124228901', NULL, NULL, '科学研究', '科学教师', NULL, NULL, NULL, NULL, NULL, '科学教师', 'jjjjjzk@163.com', NULL, 5, '1112', 'teacher', 'active', NULL, '$2y$12$0WW4ifRU1YgW7of3CdqmgOEUiSejmu32QyjxUxCodV4l3CBwhTkSS', NULL, '2025-07-04 05:20:46', '2025-07-04 05:20:46', NULL),
+(8, 'zhao2', '赵教师', '赵教师', 'male', NULL, NULL, NULL, NULL, NULL, '教师', NULL, NULL, NULL, NULL, NULL, '教师', 'sfa@163.com', NULL, 5, NULL, 'teacher', 'active', NULL, '$2y$12$sK0cSWBmma9RQ5LrNP.7mOG1oMoUBKz240CrABe/dzTt9hSCneSza', NULL, '2025-07-04 05:51:10', '2025-07-04 05:51:10', NULL);
 
 -- --------------------------------------------------------
 
@@ -1280,8 +2043,10 @@ CREATE TABLE `user_organizations` (
 INSERT INTO `user_organizations` (`id`, `user_id`, `organization_id`, `is_primary`, `status`, `created_at`, `updated_at`) VALUES
 (1, 1, 3, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
 (2, 2, 4, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(3, 3, 5, 1, 'active', '2025-06-20 01:17:00', '2025-06-20 01:17:00'),
-(5, 6, 20, 0, 'active', '2025-06-27 15:32:29', '2025-06-27 17:23:19');
+(3, 3, 5, 1, 'active', '2025-06-20 01:17:00', '2025-07-04 05:48:27'),
+(5, 6, 20, 0, 'active', '2025-06-27 15:32:29', '2025-06-27 17:23:19'),
+(6, 7, 5, 1, 'active', '2025-07-04 05:20:46', '2025-07-04 05:49:20'),
+(7, 8, 5, 1, 'active', '2025-07-04 05:51:10', '2025-07-04 05:51:10');
 
 -- --------------------------------------------------------
 
@@ -1339,6 +2104,37 @@ ALTER TABLE `cache_locks`
   ADD PRIMARY KEY (`key`);
 
 --
+-- 表的索引 `catalog_import_logs`
+--
+ALTER TABLE `catalog_import_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `catalog_import_logs_user_id_created_at_index` (`user_id`,`created_at`),
+  ADD KEY `catalog_import_logs_status_created_at_index` (`status`,`created_at`),
+  ADD KEY `catalog_import_logs_organization_id_import_type_index` (`organization_id`,`import_type`),
+  ADD KEY `catalog_import_logs_import_type_status_index` (`import_type`,`status`);
+
+--
+-- 表的索引 `catalog_versions`
+--
+ALTER TABLE `catalog_versions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `catalog_versions_catalog_id_version_index` (`catalog_id`,`version`),
+  ADD KEY `catalog_versions_catalog_id_created_at_index` (`catalog_id`,`created_at`),
+  ADD KEY `catalog_versions_change_type_status_index` (`change_type`,`status`),
+  ADD KEY `catalog_versions_created_by_created_at_index` (`created_by`,`created_at`);
+
+--
+-- 表的索引 `curriculum_standards`
+--
+ALTER TABLE `curriculum_standards`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `curriculum_standards_code_unique` (`code`),
+  ADD KEY `curriculum_standards_subject_grade_version_index` (`subject`,`grade`,`version`),
+  ADD KEY `curriculum_standards_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `curriculum_standards_effective_date_expiry_date_index` (`effective_date`,`expiry_date`),
+  ADD KEY `curriculum_standards_created_by_created_at_index` (`created_by`,`created_at`);
+
+--
 -- 表的索引 `district_assignment_history`
 --
 ALTER TABLE `district_assignment_history`
@@ -1369,6 +2165,108 @@ ALTER TABLE `education_zones`
   ADD KEY `education_zones_manager_id_foreign` (`manager_id`);
 
 --
+-- 表的索引 `equipment`
+--
+ALTER TABLE `equipment`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `equipment_code_unique` (`code`),
+  ADD KEY `equipment_category_id_status_index` (`category_id`,`status`),
+  ADD KEY `equipment_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `equipment_status_location_index` (`status`,`location`),
+  ADD KEY `equipment_purchase_date_warranty_date_index` (`purchase_date`,`warranty_date`),
+  ADD KEY `equipment_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `equipment_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `equipment_borrowings`
+--
+ALTER TABLE `equipment_borrowings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `equipment_borrowings_borrowing_code_unique` (`borrowing_code`),
+  ADD KEY `equipment_borrowings_equipment_id_status_index` (`equipment_id`,`status`),
+  ADD KEY `equipment_borrowings_borrower_id_status_index` (`borrower_id`,`status`),
+  ADD KEY `equipment_borrowings_approver_id_approved_at_index` (`approver_id`,`approved_at`),
+  ADD KEY `equipment_borrowings_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `equipment_borrowings_planned_start_time_planned_end_time_index` (`planned_start_time`,`planned_end_time`),
+  ADD KEY `equipment_borrowings_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `equipment_borrowings_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `equipment_categories`
+--
+ALTER TABLE `equipment_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `equipment_categories_code_unique` (`code`),
+  ADD KEY `equipment_categories_parent_id_status_index` (`parent_id`,`status`),
+  ADD KEY `equipment_categories_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `equipment_categories_subject_grade_range_index` (`subject`,`grade_range`),
+  ADD KEY `equipment_categories_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `equipment_categories_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `experiment_catalogs`
+--
+ALTER TABLE `experiment_catalogs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `experiment_catalogs_code_unique` (`code`),
+  ADD KEY `experiment_catalogs_subject_grade_textbook_version_index` (`subject`,`grade`,`textbook_version`),
+  ADD KEY `experiment_catalogs_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `experiment_catalogs_experiment_type_difficulty_level_index` (`experiment_type`,`difficulty_level`),
+  ADD KEY `experiment_catalogs_created_by_created_at_index` (`created_by`,`created_at`);
+
+--
+-- 表的索引 `experiment_photos`
+--
+ALTER TABLE `experiment_photos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `experiment_photos_experiment_record_id_photo_type_index` (`experiment_record_id`,`photo_type`),
+  ADD KEY `experiment_photos_compliance_status_created_at_index` (`compliance_status`,`created_at`),
+  ADD KEY `experiment_photos_organization_id_photo_type_index` (`organization_id`,`photo_type`),
+  ADD KEY `experiment_photos_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `experiment_photos_upload_method_created_at_index` (`upload_method`,`created_at`),
+  ADD KEY `experiment_photos_hash_index` (`hash`);
+
+--
+-- 表的索引 `experiment_plans`
+--
+ALTER TABLE `experiment_plans`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `experiment_plans_code_unique` (`code`),
+  ADD KEY `experiment_plans_experiment_catalog_id_teacher_id_index` (`experiment_catalog_id`,`teacher_id`),
+  ADD KEY `experiment_plans_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `experiment_plans_planned_date_status_index` (`planned_date`,`status`),
+  ADD KEY `experiment_plans_teacher_id_status_index` (`teacher_id`,`status`),
+  ADD KEY `experiment_plans_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `experiment_plans_approved_by_approved_at_index` (`approved_by`,`approved_at`),
+  ADD KEY `experiment_plans_curriculum_standard_id_foreign` (`curriculum_standard_id`),
+  ADD KEY `experiment_plans_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `experiment_records`
+--
+ALTER TABLE `experiment_records`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `experiment_records_experiment_plan_id_execution_date_index` (`experiment_plan_id`,`execution_date`),
+  ADD KEY `experiment_records_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `experiment_records_completion_status_status_index` (`completion_status`,`status`),
+  ADD KEY `experiment_records_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `experiment_records_reviewed_by_reviewed_at_index` (`reviewed_by`,`reviewed_at`),
+  ADD KEY `experiment_records_execution_date_completion_status_index` (`execution_date`,`completion_status`);
+
+--
+-- 表的索引 `experiment_review_logs`
+--
+ALTER TABLE `experiment_review_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `experiment_review_logs_experiment_record_id_review_type_index` (`experiment_record_id`,`review_type`),
+  ADD KEY `experiment_review_logs_reviewer_id_created_at_index` (`reviewer_id`,`created_at`),
+  ADD KEY `experiment_review_logs_organization_id_review_type_index` (`organization_id`,`review_type`),
+  ADD KEY `experiment_review_logs_new_status_created_at_index` (`new_status`,`created_at`),
+  ADD KEY `experiment_review_logs_review_category_created_at_index` (`review_category`,`created_at`),
+  ADD KEY `experiment_review_logs_is_ai_review_created_at_index` (`is_ai_review`,`created_at`),
+  ADD KEY `experiment_review_logs_is_urgent_created_at_index` (`is_urgent`,`created_at`);
+
+--
 -- 表的索引 `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
@@ -1396,6 +2294,58 @@ ALTER TABLE `job_batches`
   ADD PRIMARY KEY (`id`);
 
 --
+-- 表的索引 `materials`
+--
+ALTER TABLE `materials`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `materials_code_unique` (`code`),
+  ADD KEY `materials_category_id_status_index` (`category_id`,`status`),
+  ADD KEY `materials_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `materials_current_stock_min_stock_index` (`current_stock`,`min_stock`),
+  ADD KEY `materials_expiry_date_status_index` (`expiry_date`,`status`),
+  ADD KEY `materials_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `materials_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `material_categories`
+--
+ALTER TABLE `material_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `material_categories_code_unique` (`code`),
+  ADD KEY `material_categories_parent_id_status_index` (`parent_id`,`status`),
+  ADD KEY `material_categories_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `material_categories_subject_grade_range_index` (`subject`,`grade_range`),
+  ADD KEY `material_categories_material_type_status_index` (`material_type`,`status`),
+  ADD KEY `material_categories_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `material_categories_updated_by_foreign` (`updated_by`);
+
+--
+-- 表的索引 `material_stock_logs`
+--
+ALTER TABLE `material_stock_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `material_stock_logs_log_code_unique` (`log_code`),
+  ADD KEY `material_stock_logs_material_id_operated_at_index` (`material_id`,`operated_at`),
+  ADD KEY `material_stock_logs_operation_type_operated_at_index` (`operation_type`,`operated_at`),
+  ADD KEY `material_stock_logs_operator_id_operated_at_index` (`operator_id`,`operated_at`),
+  ADD KEY `material_stock_logs_organization_id_operated_at_index` (`organization_id`,`operated_at`),
+  ADD KEY `material_stock_logs_reference_type_reference_id_index` (`reference_type`,`reference_id`);
+
+--
+-- 表的索引 `material_usages`
+--
+ALTER TABLE `material_usages`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `material_usages_usage_code_unique` (`usage_code`),
+  ADD KEY `material_usages_material_id_used_at_index` (`material_id`,`used_at`),
+  ADD KEY `material_usages_user_id_used_at_index` (`user_id`,`used_at`),
+  ADD KEY `material_usages_experiment_catalog_id_used_at_index` (`experiment_catalog_id`,`used_at`),
+  ADD KEY `material_usages_organization_id_used_at_index` (`organization_id`,`used_at`),
+  ADD KEY `material_usages_usage_type_used_at_index` (`usage_type`,`used_at`),
+  ADD KEY `material_usages_created_by_created_at_index` (`created_by`,`created_at`),
+  ADD KEY `material_usages_updated_by_foreign` (`updated_by`);
+
+--
 -- 表的索引 `migrations`
 --
 ALTER TABLE `migrations`
@@ -1420,6 +2370,16 @@ ALTER TABLE `organization_import_logs`
   ADD KEY `organization_import_logs_parent_id_foreign` (`parent_id`),
   ADD KEY `organization_import_logs_user_id_created_at_index` (`user_id`,`created_at`),
   ADD KEY `organization_import_logs_status_index` (`status`);
+
+--
+-- 表的索引 `organization_permissions`
+--
+ALTER TABLE `organization_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `organization_permissions_organization_id_permission_id_unique` (`organization_id`,`permission_id`),
+  ADD KEY `organization_permissions_permission_id_foreign` (`permission_id`),
+  ADD KEY `organization_permissions_granted_by_foreign` (`granted_by`),
+  ADD KEY `organization_permissions_organization_id_access_type_index` (`organization_id`,`access_type`);
 
 --
 -- 表的索引 `password_reset_tokens`
@@ -1507,6 +2467,17 @@ ALTER TABLE `personal_access_tokens`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
   ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
+
+--
+-- 表的索引 `photo_templates`
+--
+ALTER TABLE `photo_templates`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `photo_templates_code_unique` (`code`),
+  ADD KEY `photo_templates_subject_grade_textbook_version_index` (`subject`,`grade`,`textbook_version`),
+  ADD KEY `photo_templates_organization_id_status_index` (`organization_id`,`status`),
+  ADD KEY `photo_templates_experiment_type_status_index` (`experiment_type`,`status`),
+  ADD KEY `photo_templates_created_by_created_at_index` (`created_by`,`created_at`);
 
 --
 -- 表的索引 `roles`
@@ -1612,6 +2583,24 @@ ALTER TABLE `zone_schools`
 --
 
 --
+-- 使用表AUTO_INCREMENT `catalog_import_logs`
+--
+ALTER TABLE `catalog_import_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `catalog_versions`
+--
+ALTER TABLE `catalog_versions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用表AUTO_INCREMENT `curriculum_standards`
+--
+ALTER TABLE `curriculum_standards`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- 使用表AUTO_INCREMENT `district_assignment_history`
 --
 ALTER TABLE `district_assignment_history`
@@ -1628,6 +2617,54 @@ ALTER TABLE `district_boundaries`
 --
 ALTER TABLE `education_zones`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `equipment`
+--
+ALTER TABLE `equipment`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- 使用表AUTO_INCREMENT `equipment_borrowings`
+--
+ALTER TABLE `equipment_borrowings`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用表AUTO_INCREMENT `equipment_categories`
+--
+ALTER TABLE `equipment_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- 使用表AUTO_INCREMENT `experiment_catalogs`
+--
+ALTER TABLE `experiment_catalogs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用表AUTO_INCREMENT `experiment_photos`
+--
+ALTER TABLE `experiment_photos`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- 使用表AUTO_INCREMENT `experiment_plans`
+--
+ALTER TABLE `experiment_plans`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- 使用表AUTO_INCREMENT `experiment_records`
+--
+ALTER TABLE `experiment_records`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- 使用表AUTO_INCREMENT `experiment_review_logs`
+--
+ALTER TABLE `experiment_review_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- 使用表AUTO_INCREMENT `failed_jobs`
@@ -1648,10 +2685,34 @@ ALTER TABLE `jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用表AUTO_INCREMENT `materials`
+--
+ALTER TABLE `materials`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- 使用表AUTO_INCREMENT `material_categories`
+--
+ALTER TABLE `material_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用表AUTO_INCREMENT `material_stock_logs`
+--
+ALTER TABLE `material_stock_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- 使用表AUTO_INCREMENT `material_usages`
+--
+ALTER TABLE `material_usages`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- 使用表AUTO_INCREMENT `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- 使用表AUTO_INCREMENT `organizations`
@@ -1664,6 +2725,12 @@ ALTER TABLE `organizations`
 --
 ALTER TABLE `organization_import_logs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- 使用表AUTO_INCREMENT `organization_permissions`
+--
+ALTER TABLE `organization_permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `permissions`
@@ -1705,7 +2772,13 @@ ALTER TABLE `permission_templates`
 -- 使用表AUTO_INCREMENT `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+
+--
+-- 使用表AUTO_INCREMENT `photo_templates`
+--
+ALTER TABLE `photo_templates`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- 使用表AUTO_INCREMENT `roles`
@@ -1717,7 +2790,7 @@ ALTER TABLE `roles`
 -- 使用表AUTO_INCREMENT `role_user`
 --
 ALTER TABLE `role_user`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- 使用表AUTO_INCREMENT `school_import_logs`
@@ -1741,13 +2814,13 @@ ALTER TABLE `template_permissions`
 -- 使用表AUTO_INCREMENT `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- 使用表AUTO_INCREMENT `user_organizations`
 --
 ALTER TABLE `user_organizations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- 使用表AUTO_INCREMENT `user_permissions`
@@ -1790,10 +2863,87 @@ ALTER TABLE `education_zones`
   ADD CONSTRAINT `education_zones_manager_id_foreign` FOREIGN KEY (`manager_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
+-- 限制表 `equipment`
+--
+ALTER TABLE `equipment`
+  ADD CONSTRAINT `equipment_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `equipment_categories` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 限制表 `equipment_borrowings`
+--
+ALTER TABLE `equipment_borrowings`
+  ADD CONSTRAINT `equipment_borrowings_approver_id_foreign` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `equipment_borrowings_borrower_id_foreign` FOREIGN KEY (`borrower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_borrowings_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_borrowings_equipment_id_foreign` FOREIGN KEY (`equipment_id`) REFERENCES `equipment` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_borrowings_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_borrowings_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 限制表 `equipment_categories`
+--
+ALTER TABLE `equipment_categories`
+  ADD CONSTRAINT `equipment_categories_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_categories_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_categories_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `equipment_categories` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `equipment_categories_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 限制表 `experiment_plans`
+--
+ALTER TABLE `experiment_plans`
+  ADD CONSTRAINT `experiment_plans_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `experiment_plans_curriculum_standard_id_foreign` FOREIGN KEY (`curriculum_standard_id`) REFERENCES `curriculum_standards` (`id`),
+  ADD CONSTRAINT `experiment_plans_experiment_catalog_id_foreign` FOREIGN KEY (`experiment_catalog_id`) REFERENCES `experiment_catalogs` (`id`),
+  ADD CONSTRAINT `experiment_plans_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`),
+  ADD CONSTRAINT `experiment_plans_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `experiment_plans_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
 -- 限制表 `import_logs`
 --
 ALTER TABLE `import_logs`
   ADD CONSTRAINT `import_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- 限制表 `materials`
+--
+ALTER TABLE `materials`
+  ADD CONSTRAINT `materials_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `material_categories` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `materials_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `materials_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `materials_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 限制表 `material_categories`
+--
+ALTER TABLE `material_categories`
+  ADD CONSTRAINT `material_categories_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_categories_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_categories_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `material_categories` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_categories_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- 限制表 `material_stock_logs`
+--
+ALTER TABLE `material_stock_logs`
+  ADD CONSTRAINT `material_stock_logs_material_id_foreign` FOREIGN KEY (`material_id`) REFERENCES `materials` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_stock_logs_operator_id_foreign` FOREIGN KEY (`operator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_stock_logs_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE;
+
+--
+-- 限制表 `material_usages`
+--
+ALTER TABLE `material_usages`
+  ADD CONSTRAINT `material_usages_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_usages_experiment_catalog_id_foreign` FOREIGN KEY (`experiment_catalog_id`) REFERENCES `experiment_catalogs` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `material_usages_material_id_foreign` FOREIGN KEY (`material_id`) REFERENCES `materials` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_usages_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `material_usages_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `material_usages_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- 限制表 `organizations`
@@ -1807,6 +2957,14 @@ ALTER TABLE `organizations`
 ALTER TABLE `organization_import_logs`
   ADD CONSTRAINT `organization_import_logs_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `organization_import_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- 限制表 `organization_permissions`
+--
+ALTER TABLE `organization_permissions`
+  ADD CONSTRAINT `organization_permissions_granted_by_foreign` FOREIGN KEY (`granted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `organization_permissions_organization_id_foreign` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `organization_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
 
 --
 -- 限制表 `permissions`

@@ -114,6 +114,80 @@
             <span>材料使用记录</span>
           </el-menu-item>
         </el-sub-menu>
+
+        <el-sub-menu index="/experiment-process">
+          <template #title>
+            <el-icon><Operation /></el-icon>
+            <span>实验过程管理</span>
+            <el-tag size="small" type="success" style="margin-left: 8px">新功能</el-tag>
+          </template>
+          <el-menu-item index="/experiment-plans">
+            <el-icon><Calendar /></el-icon>
+            <span>实验计划申报</span>
+          </el-menu-item>
+          <el-menu-item index="/experiment-records">
+            <el-icon><EditPen /></el-icon>
+            <span>实验记录填报</span>
+          </el-menu-item>
+          <el-menu-item
+            v-if="canAccessReview"
+            index="/experiment-review"
+          >
+            <el-icon><Select /></el-icon>
+            <span>实验记录审核</span>
+          </el-menu-item>
+          <el-menu-item index="/experiment-calendar">
+            <el-icon><Calendar /></el-icon>
+            <span>实验日历</span>
+          </el-menu-item>
+          <el-menu-item index="/experiment-monitor">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>实验执行监控</span>
+          </el-menu-item>
+          <el-menu-item index="/experiment-calendar">
+            <el-icon><Calendar /></el-icon>
+            <span>实验日历</span>
+            <el-tag size="small" type="success" style="margin-left: 8px">新功能</el-tag>
+          </el-menu-item>
+          <el-menu-item
+            v-if="canAccessTest"
+            index="/system-test"
+          >
+            <el-icon><Tools /></el-icon>
+            <span>系统功能测试</span>
+            <el-tag size="small" type="warning" style="margin-left: 8px">测试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/menu-test">
+            <el-icon><Grid /></el-icon>
+            <span>菜单功能测试</span>
+            <el-tag size="small" type="info" style="margin-left: 8px">调试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/icon-test">
+            <el-icon><Picture /></el-icon>
+            <span>图标测试</span>
+            <el-tag size="small" type="info" style="margin-left: 8px">调试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/role-test">
+            <el-icon><User /></el-icon>
+            <span>角色权限测试</span>
+            <el-tag size="small" type="info" style="margin-left: 8px">调试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/calendar-test">
+            <el-icon><Calendar /></el-icon>
+            <span>日历功能测试</span>
+            <el-tag size="small" type="info" style="margin-left: 8px">调试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/monitor-test">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>监控功能测试</span>
+            <el-tag size="small" type="info" style="margin-left: 8px">调试</el-tag>
+          </el-menu-item>
+          <el-menu-item index="/import-test">
+            <el-icon><Tools /></el-icon>
+            <span>导入测试</span>
+            <el-tag size="small" type="warning" style="margin-left: 8px">修复</el-tag>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     
@@ -160,6 +234,7 @@
 import { useAuthStore } from '../../stores/auth'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import { computed } from 'vue'
 import {
   Monitor,
   OfficeBuilding,
@@ -175,11 +250,41 @@ import {
   Box,
   Goods,
   TrendCharts,
-  DataLine
+  DataLine,
+  Operation,
+  Calendar,
+  EditPen,
+  Select,
+  Tools
 } from '@element-plus/icons-vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+
+// 权限检查
+const isAdmin = computed(() => {
+  return authStore.user?.user_type === 'admin'
+})
+
+const isManager = computed(() => {
+  const userType = authStore.user?.user_type
+  return ['admin', 'school_admin', 'district_admin'].includes(userType)
+})
+
+const isTeacher = computed(() => {
+  const userType = authStore.user?.user_type
+  return userType === 'teacher'
+})
+
+const canAccessReview = computed(() => {
+  // 只有管理员可以访问审核功能
+  return isManager.value
+})
+
+const canAccessTest = computed(() => {
+  // 系统管理员和开发测试时可以访问测试功能
+  return isAdmin.value || import.meta.env.DEV
+})
 
 const handleCommand = async (command) => {
   switch (command) {

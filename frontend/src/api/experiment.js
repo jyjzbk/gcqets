@@ -133,3 +133,169 @@ export const photoTemplateApi = {
     return request.get('/photo-templates/matching', { params })
   }
 }
+
+// 实验计划API
+export const experimentPlanApi = {
+  // 获取计划列表
+  getList(params) {
+    return request.get('/experiment-plans', { params })
+  },
+
+  // 获取计划详情
+  getDetail(id) {
+    return request.get(`/experiment-plans/${id}`)
+  },
+
+  // 创建计划
+  create(data) {
+    return request.post('/experiment-plans', data)
+  },
+
+  // 更新计划
+  update(id, data) {
+    return request.put(`/experiment-plans/${id}`, data)
+  },
+
+  // 删除计划
+  delete(id) {
+    return request.delete(`/experiment-plans/${id}`)
+  },
+
+  // 提交审批
+  submit(id) {
+    return request.post(`/experiment-plans/${id}/submit`)
+  },
+
+  // 审批通过
+  approve(id, data) {
+    return request.post(`/experiment-plans/${id}/approve`, data)
+  },
+
+  // 审批拒绝
+  reject(id, data) {
+    return request.post(`/experiment-plans/${id}/reject`, data)
+  }
+}
+
+// 实验记录API
+export const experimentRecordApi = {
+  // 获取记录列表
+  getList(params) {
+    return request.get('/experiment-records', { params })
+  },
+
+  // 获取记录详情
+  getDetail(id) {
+    return request.get(`/experiment-records/${id}`)
+  },
+
+  // 创建记录
+  create(data) {
+    return request.post('/experiment-records', data)
+  },
+
+  // 更新记录
+  update(id, data) {
+    return request.put(`/experiment-records/${id}`, data)
+  },
+
+  // 删除记录
+  delete(id) {
+    return request.delete(`/experiment-records/${id}`)
+  },
+
+  // 上传照片
+  uploadPhoto(id, formData) {
+    return request.post(`/experiment-records/${id}/photos`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  // 删除照片
+  deletePhoto(recordId, photoId) {
+    return request.delete(`/experiment-records/${recordId}/photos/${photoId}`)
+  }
+}
+
+// 实验审核API
+export const experimentReviewApi = {
+  // 获取待审核记录
+  getPendingRecords(params) {
+    return request.get('/experiment-review/pending', { params })
+  },
+
+  // 批量审核
+  batchReview(data) {
+    return request.post('/experiment-review/batch', data)
+  },
+
+  // 审核通过
+  approve(id, data) {
+    return request.post(`/experiment-review/${id}/approve`, data)
+  },
+
+  // 审核拒绝
+  reject(id, data) {
+    return request.post(`/experiment-review/${id}/reject`, data)
+  },
+
+  // 请求修订
+  requestRevision(id, data) {
+    return request.post(`/experiment-review/${id}/revision`, data)
+  },
+
+  // 强制完成
+  forceComplete(id, data) {
+    return request.post(`/experiment-review/${id}/force-complete`, data)
+  },
+
+  // AI照片检查
+  aiPhotoCheck(id) {
+    return request.post(`/experiment-review/${id}/ai-check`)
+  },
+
+  // 获取审核日志
+  getReviewLogs(id) {
+    return request.get(`/experiment-review/${id}/logs`)
+  },
+
+  // 获取审核统计
+  getStatistics(params) {
+    return request.get('/experiment-review/statistics', { params })
+  },
+
+  // 获取审核趋势
+  getTrend(params) {
+    return request.get('/experiment-review/trend', { params })
+  },
+
+  // 获取审核员排名
+  getReviewerRanking(params) {
+    return request.get('/experiment-review/ranking', { params })
+  }
+}
+
+// 实验日历API
+export const experimentCalendarApi = {
+  // 获取日历数据
+  getCalendarData(params) {
+    return request.get('/experiment-calendar/data', { params })
+  },
+
+  // 获取逾期预警
+  getOverdueAlerts(params) {
+    return request.get('/experiment-calendar/overdue-alerts', { params })
+  },
+
+  // 获取实验详情
+  getExperimentDetails(id) {
+    return request.get(`/experiment-calendar/experiment/${id}`)
+  },
+
+  // 检查日程冲突
+  checkConflicts(data) {
+    return request.post('/experiment-calendar/check-conflicts', data)
+  }
+}

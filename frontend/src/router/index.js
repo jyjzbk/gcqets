@@ -159,6 +159,91 @@ const routes = [
         name: 'MaterialUsages',
         component: () => import('../views/equipment/UsageList.vue'),
         meta: { title: '材料使用记录' }
+      },
+      // 实验过程管理路由
+      {
+        path: 'experiment-plans',
+        name: 'ExperimentPlans',
+        component: () => import('../views/experiment-process/plan/PlanList.vue'),
+        meta: { title: '实验计划管理' }
+      },
+      {
+        path: 'experiment-records',
+        name: 'ExperimentRecords',
+        component: () => import('../views/experiment-process/record/RecordList.vue'),
+        meta: { title: '实验记录管理' }
+      },
+      {
+        path: 'experiment-review',
+        name: 'ExperimentReview',
+        component: () => import('../views/experiment-process/review/ReviewList.vue'),
+        meta: { title: '实验记录审核' }
+      },
+      {
+        path: 'experiment-calendar',
+        name: 'ExperimentCalendar',
+        component: () => import('../views/experiment-process/calendar/ExperimentCalendar.vue'),
+        meta: { title: '实验日历' }
+      },
+      {
+        path: 'experiment-monitor',
+        name: 'ExperimentMonitor',
+        component: () => import('../views/experiment-process/monitor/Dashboard.vue'),
+        meta: { title: '实验执行监控' }
+      },
+      {
+        path: 'system-test',
+        name: 'SystemTest',
+        component: () => import('../views/test/SystemTest.vue'),
+        meta: { title: '系统功能测试' }
+      },
+      {
+        path: 'menu-test',
+        name: 'MenuTest',
+        component: () => import('../views/test/MenuTest.vue'),
+        meta: { title: '菜单功能测试' }
+      },
+      {
+        path: 'icon-test',
+        name: 'IconTest',
+        component: () => import('../views/test/IconTest.vue'),
+        meta: { title: '图标测试' }
+      },
+      {
+        path: 'role-test',
+        name: 'RoleTest',
+        component: () => import('../views/test/RoleTest.vue'),
+        meta: { title: '角色权限测试' }
+      },
+      {
+        path: 'calendar-test',
+        name: 'CalendarTest',
+        component: () => import('../views/test/CalendarTest.vue'),
+        meta: { title: '日历功能测试' }
+      },
+      {
+        path: 'monitor-test',
+        name: 'MonitorTest',
+        component: () => import('../views/test/MonitorTest.vue'),
+        meta: { title: '监控功能测试' }
+      },
+      {
+        path: 'import-test',
+        name: 'ImportTest',
+        component: () => import('../views/test/ImportTest.vue'),
+        meta: { title: '导入测试' }
+      },
+      {
+        path: 'experiment-calendar',
+        name: 'ExperimentCalendar',
+        component: () => import('../views/experiment-process/calendar/ExperimentCalendar.vue'),
+        meta: { title: '实验日历' }
+      },
+      {
+        path: 'calendar-test',
+        name: 'CalendarTest',
+        component: () => import('../views/experiment-process/calendar/CalendarTest.vue'),
+        meta: { title: '日历功能测试' }
       }
     ]
   }

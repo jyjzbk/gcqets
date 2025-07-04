@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
+import { handleApiError } from '../utils/errorHandler'
 
 // 创建axios实例
 const request = axios.create({
@@ -28,36 +29,8 @@ request.interceptors.response.use(
     return response
   },
   (error) => {
-    const { response } = error
-    
-    if (response) {
-      const { status, data } = response
-      
-      switch (status) {
-        case 401:
-          ElMessage.error('登录已过期，请重新登录')
-          const authStore = useAuthStore()
-          authStore.logout()
-          window.location.href = '/login'
-          break
-        case 403:
-          ElMessage.error(data.message || '权限不足')
-          break
-        case 422:
-          ElMessage.error('数据验证失败')
-          break
-        case 500:
-          ElMessage.error('服务器内部错误')
-          break
-        default:
-          ElMessage.error(data.message || '请求失败')
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      ElMessage.error('请求超时，请稍后重试')
-    } else {
-      ElMessage.error('网络错误，请检查网络连接')
-    }
-    
+    // 使用统一的错误处理器
+    handleApiError(error)
     return Promise.reject(error)
   }
 )
